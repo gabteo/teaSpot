@@ -1,10 +1,11 @@
 #include <Servo.h>
 #include <AccelStepper.h>
 
-#define ACUCAR sabor4
-#define ADOCANTE sabor5
 #define CHA sabor1
 #define TODDY sabor2
+#define ACUCAR sabor4
+#define ADOCANTE sabor5
+
 
 //-----------defines temporarios----------//
 //adaptar para MUX!!!
@@ -12,14 +13,13 @@
 //portas dos reles
 #define ESTEIRA A0
 #define BOMBA A1 
-const int aquecedor;
-const int mexedor;
+#define EBULIDOR A2;
+#define MEXEDOR A3;
 
 //portas IR
 const int IRdispenser = 3;
 const int IRaquecer = 4;
 int IRsabores[5] = {5,NULL,NULL,NULL,NULL};
-//IRsabores = [5,NULL,NULL,NULL,NULL];
 const int IRmexedor = 6;
 const int IRfinalizar = 7;
 
@@ -35,10 +35,10 @@ AccelStepper motorElevador(1, 5, 4);
 //vide setup
 
 //portas motor sabor1
-const int pin1A;
-const int pin1B;
-const int pin2A;
-const int pin2B;
+const int sabor1Pin1A = 11;
+const int sabor1Pin1B = 10;
+const int sabor1Pin2A = 9;
+const int sabor1Pin2B = 8;
 
 //------------fim defines temporarios -----------//
 Servo dispenserLeft, dispenserRight;
@@ -55,11 +55,11 @@ struct pedido {
   //bool sabor1, sabor2, sabor3, sabor4, sabor5;  
 };
 
+
+//------------------FUNÇÕES DE SETUP------------------------//
 void setupCupDispenser() {
-  dispenserLeft.attach(7);
-  dispenserRight.attach(8);
-  dispenserLeft.write(143);
-  dispenserRight.write(21);
+  dispenserLeft.attach(2);
+  dispenserRight.attach(3);
   return;
 }
 
@@ -74,10 +74,10 @@ void setupElevador() {
   //sentidoHorarioElevador = 0;
   //AccelStepper motorElevador la nos defines
 
-  motorElevador.setMaxSpeed(100);
-  motorElevador.setSpeed(100);
-  motorElevador.setAcceleration(100);
-  Serial.println("Elevador configurado: h horario, j antihorario.");
+  motorElevador.setMaxSpeed(300);
+  motorElevador.setSpeed(300);
+  motorElevador.setAcceleration(300);
+  Serial.println("Elevador configurado.");
   }
 
 void setupBomba() {
@@ -89,10 +89,17 @@ void setupSabores() {
   
 }
 void setupMexedor() {
-  
+  pinMode(MEXEDOR, OUTPUT);
+  digitalWrite(MEXEDOR, LOW);
+}
+
+void setupEbulidor() {
+  pinMode(EBULIDOR, OUTPUT);
+  digitalWrite(EBULIDOR, LOW);  
 }
 
 
+//------------------FUNÇÕES DE LIGAR/DESLIGAR------------------------//
 
 bool dispensarCopo() {
   //estica (solta o copo)
@@ -141,28 +148,49 @@ void subirElevador() {
 }
 
 void ligarBomba() {
-  
+  digitalWrite(BOMBA, HIGH);
 }
-
 void desligarBomba() {
+  digitalWrite(BOMBA, LOW);
+}
+
+void ligarEbulidor() {
+  digitalWrite(EBULIDOR, HIGH);
+}
+void desligarEbulidor() {
+  digitalWrite(EBULIDOR, LOW);
+}
+
+void abaixarColher() {
 
 }
+void levantarColher() {
+
+}
+
+void ligarMexedor() {
+  digitalWrite(MEXEDOR, HIGH);  
+}
+void desligarMexedor() {
+  digitalWrite(MEXEDOR, LOW);  
+}
+
 
 void encherCopo() {
   ligarBomba();
-  delay(4000);
+  delay(3000);
   //if nivel de agua
-  //desligar bomba
+  desligarBomba();
   return;
   }
 
 
 void aquecer() {
-  //ligar ebulidor
+  ligarEbulidor();
   delay(4000);
 
   //if temperatura
-  //desligar ebulidor 
+  desligarEbulidor();
   return;
 }
 
@@ -177,21 +205,7 @@ void mexer() {
   return;
   }
   
-void abaixarColher() {
 
-}
-
-void ligarMexedor() {
-
-}
-  
-void desligarMexedor() {
-
-}
-
-void levantarColher() {
-
-}
 
 void error() {
   Serial.print("Um erro aconteceu!");
@@ -327,7 +341,7 @@ void modoTeste() {
     }
 }
 
-
+int pedidosNaFila = 0
 
 void setup() {
   //configura servos do dispenser de copos
@@ -350,11 +364,11 @@ void loop() {
     pedidoTeste.sabores[i] = 0;
 
   //funções de teste
-  digitalWrite(BOMBA, LOW);
+  ligarBomba();
   delay(3000);
-  digitalWrite(BOMBA, HIGH);  
+  desligarBomba();  
   delay(3000);
-    //modoTeste();
+  //modoTeste();
   
   //prepararPedido(pedidoTeste);
   //exit(0);
