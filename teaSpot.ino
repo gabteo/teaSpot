@@ -13,25 +13,27 @@
 //portas dos reles
 #define ESTEIRA A0
 #define BOMBA A1 
-#define EBULIDOR A2;
-#define MEXEDOR A3;
+#define EBULIDOR A2
+#define MEXEDOR A3
 
 //portas IR
 const int IRdispenser = 3;
 const int IRaquecer = 4;
-int IRsabores[5] = {5,NULL,NULL,NULL,NULL};
+//int IRsabores[5] = {5,NULL,NULL,NULL,NULL};
 const int IRmexedor = 6;
 const int IRfinalizar = 7;
 
 
 
 //portas motor aquecedor
-const int dirElevador;
-const int stepElevador;
-//const int enElevador;
+const int dirElevador = 4;
+const int stepElevador = 7;
+int enElevador = 10;
+bool isElevadorEnabled = 0;
 
 //portas motor elevador
-AccelStepper motorElevador(1, 5, 4);
+AccelStepper motorElevador(1, stepElevador, dirElevador);
+bool elevadorDescendo = 1;
 //vide setup
 
 //portas motor sabor1
@@ -54,12 +56,23 @@ struct pedido {
   bool sabores[5];
   //bool sabor1, sabor2, sabor3, sabor4, sabor5;  
 };
+/*const int maxLeft = 200;
+const int minLeft = 90;
+const int maxRight = 55;
+const int minRight = 21*0.9;*/
 
 
+const int maxLeft = 143*1.1;
+const int minLeft = 100;
+const int maxRight = 55;
+const int minRight = 21*0.9;
+void esticarDispenser();
 //------------------FUNÇÕES DE SETUP------------------------//
 void setupCupDispenser() {
   dispenserLeft.attach(2);
   dispenserRight.attach(3);
+  esticarDispenser();
+  Serial.println("setup dipenser");
   return;
 }
 
@@ -74,20 +87,22 @@ void setupElevador() {
   //sentidoHorarioElevador = 0;
   //AccelStepper motorElevador la nos defines
 
-  motorElevador.setMaxSpeed(300);
-  motorElevador.setSpeed(300);
-  motorElevador.setAcceleration(300);
+  motorElevador.setMaxSpeed(800);
+  motorElevador.setSpeed(800);
+  motorElevador.setAcceleration(500);
   Serial.println("Elevador configurado.");
   }
 
 void setupBomba() {
   pinMode(BOMBA, OUTPUT);
-  digitalWrite(BOMBA, LOW);
+  digitalWrite(BOMBA, HIGH); 
+  Serial.println("setup bomba");
 }
 
 void setupSabores() {
   
 }
+
 void setupMexedor() {
   pinMode(MEXEDOR, OUTPUT);
   digitalWrite(MEXEDOR, LOW);
@@ -100,30 +115,32 @@ void setupEbulidor() {
 
 
 //------------------FUNÇÕES DE LIGAR/DESLIGAR------------------------//
-
-bool dispensarCopo() {
-  //estica (solta o copo)
-  for (float posL = 143, posR = 21; posL>100 || posR<55; posL -= 1.26, posR +=1) {
-    if(posL>100)
+void esticarDispenser() {
+  for (float posL = maxLeft, posR = minRight; posL>minLeft || posR<maxRight; posL -= 1.26, posR +=1) {
+    if(posL > minLeft)
       dispenserLeft.write(posL);
-    if(posR<55)
+    if(posR < maxRight)
       dispenserRight.write(posR);    
-  }
+  } //termina em Lmin Rmax
   //dispenserLeft.write(100);
-  //dispenserRight.write(55);
-  
-  delay(1500);
-
-  //encolhe novamente
-  for (float posL = 100, posR = 55; posL<143 || posR>21; posL += 1.26, posR -=1) {
-    if(posL<143)
+  //dispenserRight.write(55);  
+}
+void encolherDispenser() {
+  for (float posL = minLeft, posR = maxRight; posL<maxLeft || posR>minRight; posL += 1.26, posR -=1) {
+    if(posL < maxLeft)
       dispenserLeft.write(posL);
-    if(posR>21)
+    if(posR > minRight)
       dispenserRight.write(posR);    
-  }
+  } //termina em Lmax Rmin
   //dispenserLeft.write(143);
   //dispenserRight.write(21);
+}
 
+bool dispensarCopo() {
+  esticarDispenser();
+  delay(1500);
+  encolherDispenser();
+  Serial.println("copo dispensado");
   return 1;
 }
 
@@ -136,22 +153,31 @@ bool desligarEsteira() {
 }
 
 void descerElevador() {
-  //descer elevador
-  delay(tempoElevador);
+  //descer elevador: sentido horário
+  elevadorDescendo = 1;  
+  isElevadorEnabled = 1;
+  digitalWrite(enElevador, LOW);
+  //delay(tempoElevador);
   //parar elevador
 }
 
 void subirElevador() {
+  elevadorDescendo = 0;  
+  isElevadorEnabled = 1;
+  digitalWrite(enElevador, LOW);
+  
   //subir elevador
-  delay(tempoElevador);
+  //delay(tempoElevador);
   //parar elevador
 }
 
 void ligarBomba() {
-  digitalWrite(BOMBA, HIGH);
-}
-void desligarBomba() {
   digitalWrite(BOMBA, LOW);
+  Serial.println("bomba ligada");
+  }
+void desligarBomba() {
+  digitalWrite(BOMBA, HIGH);
+  Serial.println("bomba desligada");
 }
 
 void ligarEbulidor() {
@@ -247,7 +273,7 @@ bool prepararPedido(pedido pedido) {
   delay(2000);
 
   //estação: sabores
-  if(digitalRead(IRaquecer) == LOW)
+  /*if(digitalRead(IRaquecer) == LOW)
     ligarEsteira();
   else {
     error();
@@ -255,24 +281,23 @@ bool prepararPedido(pedido pedido) {
   }
   for(int i = 0; i<5; i++) {
     if(pedido.sabores[i]) {
-      while(digitalRead(IRsabores[i]) == HIGH) {
-        
-      }
+        while(digitalRead(IRsabores[i]) == HIGH) {
+       
       desligarEsteira();
       dispensarSabor(i);   
     }
   }   
-      
-  delay(3000);
+ 
+  delay(3000);*/
 
   
   //estação: mexedor
-  if(digitalRead(IRsabores[0]) == LOW)
+//  if(digitalRead(IRsabores[0]) == LOW)
     ligarEsteira();
-  else {
-    error();
-    return 0;
-  }
+  //else {
+    //error();
+    //return 0;
+ // }
 
   if(digitalRead(IRmexedor) == LOW)
     desligarEsteira();
@@ -291,12 +316,24 @@ void modoTeste() {
   }
   switch(comando) {
     //elevador    
-    case 'h':
+    case 'h': { 
       subirElevador();
-      break;      
-    case 'j':
+      Serial.println("SUBINDO");
+      break;           
+      }    
+      
+    case 'j': {     
       descerElevador();
-      break;
+      Serial.println("descendo");
+      break;      
+    }
+    case 'k': {
+      isElevadorEnabled = 0;
+      motorElevador.moveTo(0);
+      digitalWrite(enElevador, HIGH);
+      Serial.println("parando elevador");
+    }
+      
     
     //esteira
     case 'e':
@@ -339,11 +376,20 @@ void modoTeste() {
       desligarMexedor();
       break;
     }
+  if(elevadorDescendo && isElevadorEnabled) {
+    motorElevador.moveTo(10000);
+  } else if(!elevadorDescendo && isElevadorEnabled) {
+    motorElevador.moveTo(-10000);  
+  } else if(!isElevadorEnabled) {
+    
+  }
+  motorElevador.run();
 }
 
-int pedidosNaFila = 0
+int pedidosNaFila = 0;
 
 void setup() {
+  Serial.begin(9600);
   //configura servos do dispenser de copos
   setupEsteira();
   setupCupDispenser();
@@ -351,7 +397,7 @@ void setup() {
   setupSabores();
   setupMexedor();
   setupBomba();
-  Serial.begin(9600);
+  
  
 }
 
@@ -364,11 +410,10 @@ void loop() {
     pedidoTeste.sabores[i] = 0;
 
   //funções de teste
-  ligarBomba();
-  delay(3000);
-  desligarBomba();  
-  delay(3000);
-  //modoTeste();
+  
+  //desligarBomba();  
+  //delay(3000);
+  modoTeste();
   
   //prepararPedido(pedidoTeste);
   //exit(0);
