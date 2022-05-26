@@ -17,18 +17,19 @@
 #define MEXEDOR A3
 
 //portas IR
-const int IRdispenser = 3;
-const int IRaquecer = 4;
 //int IRsabores[5] = {5,NULL,NULL,NULL,NULL};
-const int IRmexedor = 6;
-const int IRfinalizar = 7;
-
-
+//pinos de controle MUX1
+const int s0mux1;
+const int s1mux1;
+const int s2mux1;
+const int s3mux1;
+//sinal MUX1
+const int mux1 = ;
 
 //portas motor aquecedor
 const int dirElevador = 4;
 const int stepElevador = 7;
-int enElevador = 10;
+int enElevador = 6;
 bool isElevadorEnabled = 0;
 
 //portas motor elevador
@@ -46,11 +47,6 @@ const int sabor1Pin2B = 8;
 Servo dispenserLeft, dispenserRight;
 const int tempoElevador = 4500;
 
-int velocidadeElevador; 
-int aceleracaoElevador;
-int sentidoHorarioElevador;
-
-
 struct pedido {
   bool aquecer;
   bool sabores[5];
@@ -61,7 +57,7 @@ const int minLeft = 90;
 const int maxRight = 55;
 const int minRight = 21*0.9;*/
 
-
+//posicoes dos servos do dispenser
 const int maxLeft = 143*1.1;
 const int minLeft = 100;
 const int maxRight = 55;
@@ -72,7 +68,7 @@ void setupCupDispenser() {
   dispenserLeft.attach(2);
   dispenserRight.attach(3);
   esticarDispenser();
-  Serial.println("setup dipenser");
+  Serial.println("Setup cup dipenser: ok");
   return;
 }
 
@@ -81,22 +77,22 @@ void setupEsteira() {
   digitalWrite(ESTEIRA, LOW);
 }
 
-void setupElevador() {
-  //velocidadeElevador = 100; 
-  //aceleracaoElevador = 100;
+void setupElevador(int velocidadeElevador = 800, int aceleracaoElevador = 500) {
   //sentidoHorarioElevador = 0;
   //AccelStepper motorElevador la nos defines
+  //int velocidadeElevador = 800; 
+  //int aceleracaoElevador = 500;
 
-  motorElevador.setMaxSpeed(800);
-  motorElevador.setSpeed(800);
-  motorElevador.setAcceleration(500);
-  Serial.println("Elevador configurado.");
+  motorElevador.setMaxSpeed(velocidadeElevador);
+  motorElevador.setSpeed(velocidadeElevador);
+  motorElevador.setAcceleration(aceleracaoElevador);
+  Serial.println("Setup elevador: ok");
   }
 
 void setupBomba() {
   pinMode(BOMBA, OUTPUT);
   digitalWrite(BOMBA, HIGH); 
-  Serial.println("setup bomba");
+  Serial.println("Setup bomba: ok");
 }
 
 void setupSabores() {
@@ -113,6 +109,59 @@ void setupEbulidor() {
   digitalWrite(EBULIDOR, LOW);  
 }
 
+void setutMUX1() {
+  pinMode(1s0, OUTPUT); 
+  pinMode(1s1, OUTPUT); 
+  pinMode(1s2, OUTPUT); 
+  pinMode(1s3, OUTPUT); 
+
+  pinMode(7, OUTPUT); 
+
+  digitalWrite(s0, LOW);
+  digitalWrite(s1, LOW);
+  digitalWrite(s2, LOW);
+  digitalWrite(s3, LOW);
+
+  digitalWrite(7, LOW); 
+  
+  Serial.println("Setup MUX1: ok");
+}
+
+
+//-----------------FUNCOES TECNICAS/MUX-------------------------//
+int readMux1(int channel){
+  int controlPin[] = {s0mux1, s1mux1, s2mux1, s3mux1};
+
+  int muxChannel[16][4]={
+    {0,0,0,0}, //channel 0
+    {1,0,0,0}, //channel 1
+    {0,1,0,0}, //channel 2
+    {1,1,0,0}, //channel 3
+    {0,0,1,0}, //channel 4
+    {1,0,1,0}, //channel 5
+    {0,1,1,0}, //channel 6
+    {1,1,1,0}, //channel 7
+    {0,0,0,1}, //channel 8
+    {1,0,0,1}, //channel 9
+    {0,1,0,1}, //channel 10
+    {1,1,0,1}, //channel 11
+    {0,0,1,1}, //channel 12
+    {1,0,1,1}, //channel 13
+    {0,1,1,1}, //channel 14
+    {1,1,1,1}  //channel 15
+  };
+
+  //loop through the 4 sig
+  for(int i = 0; i < 4; i ++){
+    digitalWrite(controlPin[i], muxChannel[channel][i]);
+  }
+
+  //read the value at the SIG pin
+  int val = digitalRead(mux1);
+
+  //return the value
+  return val;
+}
 
 //------------------FUNÇÕES DE LIGAR/DESLIGAR------------------------//
 void esticarDispenser() {
