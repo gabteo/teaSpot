@@ -12,9 +12,13 @@
 
 //portas dos reles
 #define ESTEIRA A0
-#define BOMBA A1 
-#define EBULIDOR A2
-#define MEXEDOR A3
+#define BOMBA A2 
+#define EBULIDOR A3
+#define MEXEDOR A4
+#define MEXEDOR_SERVO 9
+
+const int servoMexedorInicial = 90;
+const int servoMexedorFinal = 180;
 
 //portas IR
 //int IRsabores[5] = {5,NULL,NULL,NULL,NULL};
@@ -24,13 +28,20 @@ const int s1mux1;
 const int s2mux1;
 const int s3mux1;
 //sinal MUX1
-const int mux1 = ;
+const int mux1;
 
 //portas motor aquecedor
 const int dirElevador = 4;
 const int stepElevador = 7;
-int enElevador = 6;
+const int enElevador = 6;
 bool isElevadorEnabled = 0;
+
+//portas motor arquimedes demonstraão
+const int dirArquimedes = 10;
+const int stepArquimedes = 11;
+const int enArquimedes = 12;
+bool isArquimedesEnabled = 0;
+
 
 //portas motor elevador
 AccelStepper motorElevador(1, stepElevador, dirElevador);
@@ -74,7 +85,8 @@ void setupCupDispenser() {
 
 void setupEsteira() {
   pinMode(ESTEIRA, OUTPUT);
-  digitalWrite(ESTEIRA, LOW);
+  digitalWrite(ESTEIRA, HIGH);
+  Serial.println("Setup esteira: ok");
 }
 
 void setupElevador(int velocidadeElevador = 800, int aceleracaoElevador = 500) {
@@ -86,6 +98,7 @@ void setupElevador(int velocidadeElevador = 800, int aceleracaoElevador = 500) {
   motorElevador.setMaxSpeed(velocidadeElevador);
   motorElevador.setSpeed(velocidadeElevador);
   motorElevador.setAcceleration(aceleracaoElevador);
+  digitalWrite(enElevador, "HIGH");
   Serial.println("Setup elevador: ok");
   }
 
@@ -98,31 +111,34 @@ void setupBomba() {
 void setupSabores() {
   
 }
-
+Servo servoMexedor;
 void setupMexedor() {
   pinMode(MEXEDOR, OUTPUT);
   digitalWrite(MEXEDOR, LOW);
+  servoMexedor.attach(9);
+  servoMexedor.write(90);
 }
 
 void setupEbulidor() {
   pinMode(EBULIDOR, OUTPUT);
-  digitalWrite(EBULIDOR, LOW);  
+  digitalWrite(EBULIDOR, HIGH);
+  Serial.println("Setup ebulidor: ok");  
 }
 
 void setutMUX1() {
-  pinMode(1s0, OUTPUT); 
-  pinMode(1s1, OUTPUT); 
-  pinMode(1s2, OUTPUT); 
-  pinMode(1s3, OUTPUT); 
+  pinMode(s0mux1, OUTPUT); 
+  pinMode(s1mux1, OUTPUT); 
+  pinMode(s2mux1, OUTPUT); 
+  pinMode(s3mux1, OUTPUT); 
 
-  pinMode(7, OUTPUT); 
+  pinMode(mux1, OUTPUT); 
 
-  digitalWrite(s0, LOW);
-  digitalWrite(s1, LOW);
-  digitalWrite(s2, LOW);
-  digitalWrite(s3, LOW);
+  digitalWrite(s0mux1, LOW);
+  digitalWrite(s1mux1, LOW);
+  digitalWrite(s2mux1, LOW);
+  digitalWrite(s3mux1, LOW);
 
-  digitalWrite(7, LOW); 
+  digitalWrite(mux1, LOW); 
   
   Serial.println("Setup MUX1: ok");
 }
@@ -194,11 +210,11 @@ bool dispensarCopo() {
 }
 
 bool ligarEsteira() {
-  digitalWrite(ESTEIRA, HIGH);
+  digitalWrite(ESTEIRA, LOW);
 }
 
 bool desligarEsteira() {
-  digitalWrite(ESTEIRA, LOW);
+  digitalWrite(ESTEIRA, HIGH);
 }
 
 void descerElevador() {
@@ -222,18 +238,20 @@ void subirElevador() {
 
 void ligarBomba() {
   digitalWrite(BOMBA, LOW);
-  Serial.println("bomba ligada");
+  Serial.println("Bomba ligada");
   }
 void desligarBomba() {
   digitalWrite(BOMBA, HIGH);
-  Serial.println("bomba desligada");
+  Serial.println("Bomba desligada");
 }
 
 void ligarEbulidor() {
-  digitalWrite(EBULIDOR, HIGH);
+  digitalWrite(EBULIDOR, LOW);
+  Serial.println("Ebulidor ligado");
 }
 void desligarEbulidor() {
-  digitalWrite(EBULIDOR, LOW);
+  digitalWrite(EBULIDOR, HIGH);
+  Serial.println("Ebulidor desligado");
 }
 
 void abaixarColher() {
@@ -292,7 +310,7 @@ void dispensarSabor(int sabor) {
 }
 
 bool prepararPedido(pedido pedido) {
-  // Estação: dispenser de copos
+ /* // Estação: dispenser de copos
   dispensarCopo();
   delay(3000);
 
@@ -322,7 +340,7 @@ bool prepararPedido(pedido pedido) {
   delay(2000);
 
   //estação: sabores
-  /*if(digitalRead(IRaquecer) == LOW)
+  if(digitalRead(IRaquecer) == LOW)
     ligarEsteira();
   else {
     error();
@@ -337,7 +355,7 @@ bool prepararPedido(pedido pedido) {
     }
   }   
  
-  delay(3000);*/
+  delay(3000);
 
   
   //estação: mexedor
@@ -354,7 +372,7 @@ bool prepararPedido(pedido pedido) {
   mexer();
 
   
-  return 1;
+  return 1;*/
 }
 
 void modoTeste() {
@@ -370,7 +388,6 @@ void modoTeste() {
       Serial.println("SUBINDO");
       break;           
       }    
-      
     case 'j': {     
       descerElevador();
       Serial.println("descendo");
@@ -381,6 +398,18 @@ void modoTeste() {
       motorElevador.moveTo(0);
       digitalWrite(enElevador, HIGH);
       Serial.println("parando elevador");
+      break;
+    }
+    //aquecedor
+    case 'q': {     
+      ligarEbulidor();
+      Serial.println("Aquecendo");
+      break;      
+    }
+    case 'w': {     
+      desligarEbulidor();
+      Serial.println("Ebulidor desligado");
+      break;      
     }
       
     
@@ -409,26 +438,32 @@ void modoTeste() {
     //dispenser de copos    
     case 'c':
       dispensarCopo();
-      break;      
+      break; 
+     case 'z':
+      esticarDispenser();
+      break;     
+     case 'x':
+      encolherDispenser();
+      break;  
 
     //mexedor    
-    case 'q':
+    case '1':
       abaixarColher();
       break;
-    case 'w':
+    case 's':
       levantarColher();
       break;
     case 'a':
       ligarMexedor();
       break;      
-    case 's':
+    case 'p':
       desligarMexedor();
       break;
     }
   if(elevadorDescendo && isElevadorEnabled) {
-    motorElevador.moveTo(10000);
+    motorElevador.moveTo(-10000);
   } else if(!elevadorDescendo && isElevadorEnabled) {
-    motorElevador.moveTo(-10000);  
+    motorElevador.moveTo(10000);  
   } else if(!isElevadorEnabled) {
     
   }
@@ -439,25 +474,26 @@ int pedidosNaFila = 0;
 
 void setup() {
   Serial.begin(9600);
-  //configura servos do dispenser de copos
+
   setupEsteira();
   setupCupDispenser();
   setupElevador();
   setupSabores();
-  setupMexedor();
+  //setupMexedor();
   setupBomba();
+  setupEbulidor();
   
  
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  pedido pedidoTeste;
+  
+  /*pedido pedidoTeste;
   pedidoTeste.aquecer = 1;
   pedidoTeste.sabores[0] = 1;
   for (int i = 0; i < 5; i++)  
     pedidoTeste.sabores[i] = 0;
-
+  */
   //funções de teste
   
   //desligarBomba();  
