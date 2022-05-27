@@ -19,6 +19,7 @@
 
 const int servoMexedorInicial = 90;
 const int servoMexedorFinal = 180;
+int posServoMexedor;
 
 //portas IR
 //int IRsabores[5] = {5,NULL,NULL,NULL,NULL};
@@ -114,9 +115,10 @@ void setupSabores() {
 Servo servoMexedor;
 void setupMexedor() {
   pinMode(MEXEDOR, OUTPUT);
-  digitalWrite(MEXEDOR, LOW);
+  digitalWrite(MEXEDOR, HIGH);
   servoMexedor.attach(9);
-  servoMexedor.write(90);
+  posServoMexedor = servoMexedorInicial;
+  servoMexedor.write(posServoMexedor);
 }
 
 void setupEbulidor() {
@@ -254,20 +256,45 @@ void desligarEbulidor() {
   Serial.println("Ebulidor desligado");
 }
 
-void abaixarColher() {
 
+void levantarMexedor() {
+  Serial.println("Levantando mexedor...");
+  for(int i = posServoMexedor; i < servoMexedorFinal; i += 1) {
+    posServoMexedor = i;
+    servoMexedor.write(posServoMexedor);
+    Serial.println(posServoMexedor);
+    delay(10);    
+  }
+  Serial.println("Mexedor levantado");
 }
-void levantarColher() {
-
+void abaixarMexedor() {
+  Serial.println("Abaixando mexedor...");
+  
+  for(int i = posServoMexedor; i > servoMexedorInicial; i -= 1) {
+    posServoMexedor = i;
+    servoMexedor.write(posServoMexedor);
+    Serial.println(posServoMexedor);
+    delay(10);
+  }  
+  Serial.println("Mexedor abaixado");
 }
-
 void ligarMexedor() {
-  digitalWrite(MEXEDOR, HIGH);  
+  digitalWrite(MEXEDOR, LOW);
+  Serial.println("Mexedor ligado");
 }
 void desligarMexedor() {
-  digitalWrite(MEXEDOR, LOW);  
+  digitalWrite(MEXEDOR, HIGH);  
+  Serial.println("Mexedor desligado");
 }
-
+void mexer() {
+  abaixarMexedor();
+  delay(500);
+  ligarMexedor();
+  delay(10*1000);
+  desligarMexedor();
+  delay(500);
+  levantarMexedor();
+}
 
 void encherCopo() {
   ligarBomba();
@@ -285,19 +312,7 @@ void aquecer() {
   //if temperatura
   desligarEbulidor();
   return;
-}
-
-void mexer() {
-  abaixarColher();
-  ligarMexedor();
-  
-  delay(60000*1);  //1 minutos
-  
-  desligarMexedor();
-  levantarColher();  
-  return;
-  }
-  
+} 
 
 
 void error() {
@@ -447,11 +462,13 @@ void modoTeste() {
       break;  
 
     //mexedor    
-    case '1':
-      abaixarColher();
+    case 't':
+      Serial.println("case l...");
+      abaixarMexedor();
       break;
     case 's':
-      levantarColher();
+      Serial.println("case s...");
+      levantarMexedor();
       break;
     case 'a':
       ligarMexedor();
@@ -459,7 +476,12 @@ void modoTeste() {
     case 'p':
       desligarMexedor();
       break;
+    case 'm':
+      mexer();
+      break;
     }
+    
+      
   if(elevadorDescendo && isElevadorEnabled) {
     motorElevador.moveTo(-10000);
   } else if(!elevadorDescendo && isElevadorEnabled) {
@@ -479,7 +501,7 @@ void setup() {
   setupCupDispenser();
   setupElevador();
   setupSabores();
-  //setupMexedor();
+  setupMexedor();
   setupBomba();
   setupEbulidor();
   
