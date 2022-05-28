@@ -16,10 +16,11 @@
 #define EBULIDOR A3
 #define MEXEDOR A4
 #define MEXEDOR_SERVO 9
+#define FIM_CURSO_ELEVADOR A1
 
-const int servoMexedorInicial = 90;
-const int servoMexedorFinal = 180;
-int posServoMexedor;
+const int servoMexedorInicial = 0;
+const int servoMexedorFinal = 90;
+int posServoMexedor = servoMexedorFinal;
 
 //portas IR
 //int IRsabores[5] = {5,NULL,NULL,NULL,NULL};
@@ -79,7 +80,7 @@ void esticarDispenser();
 void setupCupDispenser() {
   dispenserLeft.attach(2);
   dispenserRight.attach(3);
-  esticarDispenser();
+  encolherDispenser();
   Serial.println("Setup cup dipenser: ok");
   return;
 }
@@ -90,16 +91,20 @@ void setupEsteira() {
   Serial.println("Setup esteira: ok");
 }
 
+bool fimCursoElevador;
 void setupElevador(int velocidadeElevador = 800, int aceleracaoElevador = 500) {
   //sentidoHorarioElevador = 0;
   //AccelStepper motorElevador la nos defines
   //int velocidadeElevador = 800; 
   //int aceleracaoElevador = 500;
-
+  pinMode(FIM_CURSO_ELEVADOR, INPUT);
   motorElevador.setMaxSpeed(velocidadeElevador);
   motorElevador.setSpeed(velocidadeElevador);
   motorElevador.setAcceleration(aceleracaoElevador);
   digitalWrite(enElevador, "HIGH");
+  fimCursoElevador = digitalRead(FIM_CURSO_ELEVADOR);
+  Serial.print("Fim de curso do elevador: ");
+  Serial.println(fimCursoElevador);
   Serial.println("Setup elevador: ok");
   }
 
@@ -112,13 +117,16 @@ void setupBomba() {
 void setupSabores() {
   
 }
+void levantarMexedor();
 Servo servoMexedor;
 void setupMexedor() {
   pinMode(MEXEDOR, OUTPUT);
   digitalWrite(MEXEDOR, HIGH);
   servoMexedor.attach(9);
-  posServoMexedor = servoMexedorInicial;
-  servoMexedor.write(posServoMexedor);
+  //posServoMexedor = servoMexedorInicial;
+  //servoMexedor.write(posServoMexedor);
+  
+  levantarMexedor();
 }
 
 void setupEbulidor() {
@@ -219,20 +227,29 @@ bool desligarEsteira() {
   digitalWrite(ESTEIRA, HIGH);
 }
 
+void pararElevador() {
+  isElevadorEnabled = 0;
+  Serial.println("Parando elevador...");
+  motorElevador.moveTo(0);
+  digitalWrite(enElevador, HIGH);  
+}
 void descerElevador() {
   //descer elevador: sentido horário
-  elevadorDescendo = 1;  
-  isElevadorEnabled = 1;
-  digitalWrite(enElevador, LOW);
-  //delay(tempoElevador);
-  //parar elevador
+  if(!fimCursoElevador) {
+    elevadorDescendo = 1;  
+    isElevadorEnabled = 1;
+    digitalWrite(enElevador, LOW);
+  } else {
+    pararElevador();
+  }
+  Serial.println("Descendo elevador...");
 }
 
 void subirElevador() {
   elevadorDescendo = 0;  
   isElevadorEnabled = 1;
   digitalWrite(enElevador, LOW);
-  
+  Serial.println("Subindo elevador...");
   //subir elevador
   //delay(tempoElevador);
   //parar elevador
@@ -263,7 +280,7 @@ void levantarMexedor() {
     posServoMexedor = i;
     servoMexedor.write(posServoMexedor);
     Serial.println(posServoMexedor);
-    delay(10);    
+    delay(30);    
   }
   Serial.println("Mexedor levantado");
 }
@@ -274,7 +291,7 @@ void abaixarMexedor() {
     posServoMexedor = i;
     servoMexedor.write(posServoMexedor);
     Serial.println(posServoMexedor);
-    delay(10);
+    delay(30);
   }  
   Serial.println("Mexedor abaixado");
 }
@@ -400,19 +417,16 @@ void modoTeste() {
     //elevador    
     case 'h': { 
       subirElevador();
-      Serial.println("SUBINDO");
+      
       break;           
       }    
     case 'j': {     
       descerElevador();
-      Serial.println("descendo");
       break;      
     }
     case 'k': {
-      isElevadorEnabled = 0;
-      motorElevador.moveTo(0);
-      digitalWrite(enElevador, HIGH);
-      Serial.println("parando elevador");
+      pararElevador();
+      Serial.println("Elevador parado");
       break;
     }
     //aquecedor
@@ -480,7 +494,21 @@ void modoTeste() {
       mexer();
       break;
     }
+
+  fimCursoElevador = digitalRead(FIM_CURSO_ELEVADOR);
+  //Serial.print("fim de curso:");
+
+  if(fimCursoElevador) {
     
+    
+    if(elevadorDescendo) {
+      pararElevador();
+      isElevadorEnabled = 0;
+      Serial.println(fimCursoElevador);
+    }
+  } else {
+    
+  }
       
   if(elevadorDescendo && isElevadorEnabled) {
     motorElevador.moveTo(-10000);
