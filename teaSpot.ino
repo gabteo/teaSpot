@@ -114,7 +114,27 @@ void setupBomba() {
   Serial.println("Setup bomba: ok");
 }
 
+
+int vel= 100; 
+  int acel= 100;
+  int sentido_horario = 0;
+  int sentido_antihorario = 0;
+  int numero = 0; 
+
+  // Definicao pino ENABLE
+  int pino_enable = 13;
+
+  // Definicao pinos STEP e DIR
+  AccelStepper motor1(1, 11, 12);
 void setupSabores() {
+  
+
+  pinMode(pino_enable, OUTPUT);
+  // Configuracoes iniciais motor de passo
+  motor1.setMaxSpeed(vel);
+  motor1.setSpeed(vel);
+  motor1.setAcceleration(acel);
+  digitalWrite(pino_enable, "HIGH");
   
 }
 void levantarMexedor();
@@ -221,10 +241,12 @@ bool dispensarCopo() {
 
 bool ligarEsteira() {
   digitalWrite(ESTEIRA, LOW);
+  Serial.println("Esteira ligada");
 }
 
 bool desligarEsteira() {
   digitalWrite(ESTEIRA, HIGH);
+  Serial.println("Esteira desligada");
 }
 
 void pararElevador() {
@@ -232,6 +254,7 @@ void pararElevador() {
   Serial.println("Parando elevador...");
   motorElevador.moveTo(0);
   digitalWrite(enElevador, HIGH);  
+  Serial.println("Elevador parado");
 }
 void descerElevador() {
   //descer elevador: sentido horário
@@ -304,6 +327,7 @@ void desligarMexedor() {
   Serial.println("Mexedor desligado");
 }
 void mexer() {
+  Serial.println("Mexendo bebida...");
   abaixarMexedor();
   delay(500);
   ligarMexedor();
@@ -315,16 +339,18 @@ void mexer() {
 
 void encherCopo() {
   ligarBomba();
-  delay(3000);
+  Serial.println("Enchendo copo...");
+  delay(5000);
   //if nivel de agua
   desligarBomba();
+  Serial.println("Copo cheio");
   return;
   }
 
 
 void aquecer() {
   ligarEbulidor();
-  delay(4000);
+  delay(15000);
 
   //if temperatura
   desligarEbulidor();
@@ -336,10 +362,37 @@ void error() {
   Serial.print("Um erro aconteceu!");
 }
 
-void dispensarSabor(int sabor) {
-  //ligar motor
-  //tempo e desliga
-}
+void dispensarSabor() {
+  Serial.println("Dispensando sabor...");
+  digitalWrite(pino_enable, LOW);
+  sentido_horario = 1;
+  sentido_antihorario = 0;
+
+  int starttime, endtime, loopcount;
+  starttime = millis();
+  endtime = starttime;
+  while ((endtime - starttime) <=2500) // do this loop for up to 1000mS
+  {
+    // code here
+      if (sentido_horario == 1)
+    {
+      motor1.moveTo(10000);
+    }
+    // Move o motor no sentido anti-horario
+    if (sentido_antihorario == 1)
+    {
+      motor1.moveTo(-10000);
+    }
+    // Comando para acionar o motor no sentido especificado
+    motor1.run();
+    loopcount = loopcount+1;
+    endtime = millis();
+  }
+  digitalWrite(pino_enable, HIGH);
+  //serial.print (loopcount,DEC);
+
+  Serial.println("Sabor dispensado");
+  }
 
 bool prepararPedido(pedido pedido) {
  /* // Estação: dispenser de copos
@@ -417,7 +470,6 @@ void modoTeste() {
     //elevador    
     case 'h': { 
       subirElevador();
-      
       break;           
       }    
     case 'j': {     
@@ -429,6 +481,7 @@ void modoTeste() {
       Serial.println("Elevador parado");
       break;
     }
+    
     //aquecedor
     case 'q': {     
       ligarEbulidor();
@@ -440,28 +493,36 @@ void modoTeste() {
       Serial.println("Ebulidor desligado");
       break;      
     }
-      
+    case 'i': {
+      aquecer();
+      break;
+    }
     
     //esteira
-    case 'e':
+    case 'e': {
       ligarEsteira();
       break;
-    case 'r':
+    }
+    case 'r': {
       desligarEsteira();
       break;  
+    }
 
     //bomba    
-    case 'b':
+    case 'b': }
       ligarBomba();
       break;
+    }
     case 'n':
       desligarBomba();
       break;
-      
+    case '1':
+      encherCopo();
+      break;
 
     //sabor1    
     case 'd':
-      dispensarSabor(1);
+      dispensarSabor();
       break;
     
     //dispenser de copos    
@@ -477,11 +538,9 @@ void modoTeste() {
 
     //mexedor    
     case 't':
-      Serial.println("case l...");
       abaixarMexedor();
       break;
     case 's':
-      Serial.println("case s...");
       levantarMexedor();
       break;
     case 'a':
