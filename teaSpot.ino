@@ -509,49 +509,60 @@ void modoTeste() {
     }
 
     //bomba    
-    case 'b': }
+    case 'b': {
       ligarBomba();
       break;
     }
-    case 'n':
+    case 'n': {
       desligarBomba();
       break;
-    case '1':
+    }
+    case '1': {
       encherCopo();
       break;
+    }
 
     //sabor1    
-    case 'd':
+    case 'd': {
       dispensarSabor();
       break;
+    }
     
     //dispenser de copos    
-    case 'c':
+    case 'c': {
       dispensarCopo();
       break; 
-     case 'z':
+    }
+    case 'z': {
       esticarDispenser();
-      break;     
-     case 'x':
+      break;  
+    }   
+    case 'x': {
       encolherDispenser();
       break;  
+    }
 
     //mexedor    
-    case 't':
+    case 't': {
       abaixarMexedor();
       break;
-    case 's':
+    }
+    case 's': {
       levantarMexedor();
       break;
-    case 'a':
+    }
+    case 'a': {
       ligarMexedor();
-      break;      
-    case 'p':
+      break;  
+    }    
+    case 'p': {
       desligarMexedor();
       break;
-    case 'm':
+    }
+    case 'm': {
       mexer();
       break;
+    }
     }
 
   fimCursoElevador = digitalRead(FIM_CURSO_ELEVADOR);
