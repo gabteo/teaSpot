@@ -6,64 +6,94 @@
 #define ACUCAR sabor4
 #define ADOCANTE sabor5
 
+//-------------DEFINES MUX--------------------//
 
-//-----------defines temporarios----------//
-//adaptar para MUX!!!
+#define BUZZER 0
+#define EN_S1 1
+#define EN_S5 2
+#define EN_S2 3
+#define EN_S3 4
+#define EN_S4 5
+#define ELEVADOR 6
+#define COPO_L 7
+#define ESTEIRA 8
 
-//portas dos reles
-#define ESTEIRA A0
-#define BOMBA A2 
-#define EBULIDOR A3
-#define MEXEDOR A4
-#define MEXEDOR_SERVO 9
-#define FIM_CURSO_ELEVADOR A1
+#define IR0 0
+#define IR1 1
+#define IR2 2
+#define IR3 3
+#define IR4 4
+#define IR5 5
+#define IR6 6
+
+#define SONDA 7
+#define COPO_R 8
+#define SERVO_MIX 9
+#define FIM_CURSO 10
+#define BOMBA 11
+#define EBULIDOR 12
+#define MOTOR_MIX 14
+
+#define SIG_MUX1 12
+#define SIG_MUX2 13
+
+
 
 const int servoMexedorInicial = 0;
 const int servoMexedorFinal = 90;
 int posServoMexedor = servoMexedorFinal;
 
-//portas IR
-//int IRsabores[5] = {5,NULL,NULL,NULL,NULL};
+//----------------PINOS MUX----------------//
 //pinos de controle MUX1
-const int s0mux1;
-const int s1mux1;
-const int s2mux1;
-const int s3mux1;
+const int s0mux1 = 2;
+const int s1mux1 = 3;
+const int s2mux1 = 4;
+const int s3mux1 = 5;
 //sinal MUX1
-const int mux1;
+const int mux1 = SIG_MUX1;
 
-//portas motor aquecedor
-const int dirElevador = 4;
-const int stepElevador = 7;
-const int enElevador = 6;
-bool isElevadorEnabled = 0;
+//MUX2
+const int s0mux2 = 6;
+const int s1mux2 = 7;
+const int s2mux2 = 8;
+const int s3mux2 = 9;
+//sinal MUX1
+const int mux2 = SIG_MUX2;
+//----------------------------------------//
+
+//portas motores bipolares
+const int dir = 10;
+const int step = 11;
+
 
 //portas motor arquimedes demonstraão
-const int dirArquimedes = 10;
+/*const int dirArquimedes = 10;
 const int stepArquimedes = 11;
 const int enArquimedes = 12;
-bool isArquimedesEnabled = 0;
+bool isArquimedesEnabled = 0;*/
 
 
 //portas motor elevador
-AccelStepper motorElevador(1, stepElevador, dirElevador);
+bool isElevadorEnabled = 0;
+AccelStepper motorPasso(1, step, dir);
 bool elevadorDescendo = 1;
 //vide setup
 
 //portas motor sabor1
-const int sabor1Pin1A = 11;
+/*const int sabor1Pin1A = 11;
 const int sabor1Pin1B = 10;
 const int sabor1Pin2A = 9;
 const int sabor1Pin2B = 8;
+*/
 
-//------------fim defines temporarios -----------//
+
+
 Servo dispenserLeft, dispenserRight;
 const int tempoElevador = 4500;
 
 struct pedido {
   bool aquecer;
   bool sabores[5];
-  //bool sabor1, sabor2, sabor3, sabor4, sabor5;  
 };
 /*const int maxLeft = 200;
 const int minLeft = 90;
@@ -76,10 +106,13 @@ const int minLeft = 100;
 const int maxRight = 55;
 const int minRight = 21*0.9;
 void esticarDispenser();
+
 //------------------FUNÇÕES DE SETUP------------------------//
 void setupCupDispenser() {
-  dispenserLeft.attach(2);
-  dispenserRight.attach(3);
+  seletorMux(COPO_L, mux1);
+  seletorMux(COPO_R, mux2);
+  dispenserLeft.attach(mux1);
+  dispenserRight.attach(mux2);
   encolherDispenser();
   Serial.println("Setup cup dipenser: ok");
   return;
@@ -175,35 +208,44 @@ void setutMUX1() {
 
 
 //-----------------FUNCOES TECNICAS/MUX-------------------------//
-int readMux1(int channel){
-  int controlPin[] = {s0mux1, s1mux1, s2mux1, s3mux1};
+
+int seletorMux(int channel, int muxSel){ //muxSel aceita variaveis mux1 ou mux2
+  int controlPin[2][4] = {
+    {s0mux1, s1mux1, s2mux1, s3mux1},
+    {s0mux2, s1mux2, s2mux2, s3mux2}
+  };
 
   int muxChannel[16][4]={
-    {0,0,0,0}, //channel 0
-    {1,0,0,0}, //channel 1
-    {0,1,0,0}, //channel 2
-    {1,1,0,0}, //channel 3
-    {0,0,1,0}, //channel 4
-    {1,0,1,0}, //channel 5
-    {0,1,1,0}, //channel 6
-    {1,1,1,0}, //channel 7
-    {0,0,0,1}, //channel 8
-    {1,0,0,1}, //channel 9
-    {0,1,0,1}, //channel 10
-    {1,1,0,1}, //channel 11
-    {0,0,1,1}, //channel 12
-    {1,0,1,1}, //channel 13
-    {0,1,1,1}, //channel 14
+    {0,0,0,0}, //channel 0    BUZZER    IR0
+    {1,0,0,0}, //channel 1    EN_S1     IR1
+    {0,1,0,0}, //channel 2    EN_S5     IR2
+    {1,1,0,0}, //channel 3    EN_S2     IR3
+    {0,0,1,0}, //channel 4    EN_S3     IR4
+    {1,0,1,0}, //channel 5    EN_S4     IR5
+    {0,1,1,0}, //channel 6    EN_ELEV   IR6
+    {1,1,1,0}, //channel 7    COPO_L    SONDA
+    {0,0,0,1}, //channel 8    ESTEIRA   COPO_R
+    {1,0,0,1}, //channel 9              SERVO_MIX
+    {0,1,0,1}, //channel 10             FIM_CURSO
+    {1,1,0,1}, //channel 11             BOMBA
+    {0,0,1,1}, //channel 12             EBULIDOR
+    {1,0,1,1}, //channel 13             
+    {0,1,1,1}, //channel 14             MOTOR_MIX
     {1,1,1,1}  //channel 15
   };
 
   //loop through the 4 sig
   for(int i = 0; i < 4; i ++){
-    digitalWrite(controlPin[i], muxChannel[channel][i]);
+    digitalWrite(controlPin[muxSel][i], muxChannel[channel][i]);
   }
+  return muxSel;
+}
+
+int readMux(int channel, int muxSel){ //muxSel aceita variaveis mux1 ou mux2
+  seletorMux(channel, muxSel);
 
   //read the value at the SIG pin
-  int val = digitalRead(mux1);
+  int val = digitalRead(muxSel);
 
   //return the value
   return val;
@@ -231,12 +273,13 @@ void encolherDispenser() {
   //dispenserRight.write(21);
 }
 
-bool dispensarCopo() {
+void dispensarCopo() {
+  setupCupDispenser();
   esticarDispenser();
   delay(1500);
   encolherDispenser();
-  Serial.println("copo dispensado");
-  return 1;
+  Serial.println("Copo dispensado");
+  return;
 }
 
 bool ligarEsteira() {
@@ -393,9 +436,9 @@ void dispensarSabor() {
 
   Serial.println("Sabor dispensado");
   }
-
+/*
 bool prepararPedido(pedido pedido) {
- /* // Estação: dispenser de copos
+  // Estação: dispenser de copos
   dispensarCopo();
   delay(3000);
 
@@ -440,17 +483,17 @@ bool prepararPedido(pedido pedido) {
     }
   }   
  
-  delay(3000);
+  delay(3000);*/
 
   
   //estação: mexedor
 //  if(digitalRead(IRsabores[0]) == LOW)
-    ligarEsteira();
+  //  ligarEsteira();
   //else {
     //error();
     //return 0;
  // }
-
+/*
   if(digitalRead(IRmexedor) == LOW)
     desligarEsteira();
 
@@ -458,7 +501,7 @@ bool prepararPedido(pedido pedido) {
 
   
   return 1;*/
-}
+/*}*/
 
 void modoTeste() {
   int comando = 0;
@@ -595,6 +638,7 @@ int pedidosNaFila = 0;
 void setup() {
   Serial.begin(9600);
 
+/*
   setupEsteira();
   setupCupDispenser();
   setupElevador();
@@ -602,7 +646,7 @@ void setup() {
   setupMexedor();
   setupBomba();
   setupEbulidor();
-  
+  */
  
 }
 
