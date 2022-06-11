@@ -23,6 +23,11 @@ void setup() {
 }
 
 void loop() {
+  int comando = 0;
+    
+  if (Serial.available() > 0) {
+    comando = Serial.read();
+  }
   // put your main code here, to run repeatedly:
   switch(comando) {  
     //dispenser de copos    
@@ -95,4 +100,12 @@ void esticarDispenser() {
   } //termina em Lmin Rmax
   //dispenserLeft.write(100);
   //dispenserRight.write(55);  
+}
+
+void dispensarCopo() {
+  esticarDispenser();
+  delay(1500);
+  encolherDispenser();
+  Serial.println("Copo dispensado");
+  return;
 }
