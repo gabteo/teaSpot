@@ -1,4 +1,4 @@
-//#include <Servo.h>
+#include <Servo.h>
 #include <AccelStepper.h>
 #include <Stepper.h>
 
@@ -177,7 +177,7 @@ void setupBomba() {
   Serial.println("Setup bomba: ok");
 }
 
-
+int stepsPerRevolution = 200
 Stepper motorUnipolar(stepsPerRevolution, A5, A4, A3,A2);
 void setupUnipolar(int stepsPerRevolution = 200, int velocidade = 60) {
   // initialize the stepper library on pins 8 through 11:
