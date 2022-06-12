@@ -1,4 +1,4 @@
-#include <Servo.h>
+//#include <Servo.h>
 #include <AccelStepper.h>
 #include <Stepper.h>
 
@@ -39,7 +39,7 @@
 #define SIG_MUX1 12
 #define SIG_MUX2 13
 
-const int enables = [ELEVADOR, EN_S1, EN_S2, EN_S3, EN_S4, EN_S5];
+const int enables[] = {ELEVADOR, EN_S1, EN_S2, EN_S3, EN_S4, EN_S5};
 
 const int servoMexedorInicial = 0;
 const int servoMexedorFinal = 90;
@@ -95,7 +95,7 @@ const int tempoElevador = 4500;
 
 struct pedido {
   bool aquecer;
-  bool sabores[5]; [0,1,2,3,4]
+  bool sabores[5] = {0,1,2,3,4};
 };
 /*const int maxLeft = 200;
 const int minLeft = 90;
@@ -140,7 +140,7 @@ void setupEsteira() {
   Serial.println("Setup esteira: ok");
 }
 
-//bool fimCursoElevador;
+bool fimCursoElevador;
 void setupElevador(int velocidadeElevador = 800, int aceleracaoElevador = 500) {
   pinMode(dir, OUTPUT);
   pinMode(step, OUTPUT);
@@ -177,11 +177,13 @@ void setupBomba() {
   Serial.println("Setup bomba: ok");
 }
 
+
+Stepper motorUnipolar(stepsPerRevolution, A5, A4, A3,A2);
 void setupUnipolar(int stepsPerRevolution = 200, int velocidade = 60) {
   // initialize the stepper library on pins 8 through 11:
   //Stepper motorUnipolar(stepsPerRevolution, 8, 9, 10, 11);
-  Stepper motorUnipolar(stepsPerRevolution, A5, A4, A3,A2);
-  myStepper.setSpeed(velocidade);
+  
+  motorUnipolar.setSpeed(velocidade);
 }
 
 void setupBipolar(int velocidade = 100, int aceleracao = 100, bool sentidoHorario = 0) {
@@ -197,7 +199,7 @@ void setupBipolar(int velocidade = 100, int aceleracao = 100, bool sentidoHorari
 
 
 void levantarMexedor();
-
+/*
 void setupMexedor() {
   seletorMux(SERVO_MIX, mux2);
   //seletorMux()
@@ -208,7 +210,7 @@ void setupMexedor() {
   //servoMexedor.write(posServoMexedor);
   
   levantarMexedor();
-}
+}*/
 
 void setupEbulidor() {
   seletorMux(EBULIDOR, mux2);
@@ -362,7 +364,7 @@ void subirElevador() {
   digitalWrite(mux1, LOW);
   Serial.println("Subindo elevador...");
   int i = 0;
-  while() { // TODO WHILE NINGUEM GRITOU
+  while(true) { // TODO WHILE NINGUEM GRITOU
     motorBipolar.moveTo(10000);
     if (!i%1000) {
       Serial.println(i + " passos");
@@ -524,7 +526,7 @@ void dispensarSabor(int sabor) {
 
   }else if(sabor==1 || sabor==2 || sabor==5) {
     //unipolar
-    passos = 2000;
+    int passos = 2000;
     switch(sabor) {
       case 1: {
         sentidoHorario = 0;
@@ -589,7 +591,7 @@ void playBuzzer() {
   delay(tempo);
 }
 
-bool prepararPedido(pedido pedido) {
+void prepararPedido(pedido pedido) {
   // Estação: dispenser de copos
   dispensarCopo();
   delay(3000);
@@ -617,7 +619,7 @@ bool prepararPedido(pedido pedido) {
   subirElevador();
   delay(2000);
   //estação: sabores
-  int irs = [IR0, IR1, IR2, IR3, IR4, IR5, IR6];
+  int irs[] = {IR0, IR1, IR2, IR3, IR4, IR5, IR6};
 
   for(int i = 0; i < 5; i++) {
     ligarEsteira();
@@ -651,12 +653,9 @@ bool prepararPedido(pedido pedido) {
   
 //----------------ate aqui tudo ok-----------------------
 
-  
-  return pedido;
-}
 
 
-
+/*
 void modoTeste() {
   int comando = 0;
     
@@ -762,7 +761,7 @@ void modoTeste() {
     }
     }
 
-  fimCursoElevador = digitalRead(FIM_CURSO_ELEVADOR);
+  fimCursoElevador = digitalRead(mux1);
   //Serial.print("fim de curso:");
 
   if(fimCursoElevador) {
@@ -786,12 +785,12 @@ void modoTeste() {
   }
   motorBipolar.run();
 }
-
+*//*
 int pedidosNaFila = 0;
 
 void setup() {
   Serial.begin(9600);
-
+*/
 /*
   setupEsteira();
   setupCupDispenser();
@@ -800,9 +799,9 @@ void setup() {
   setupMexedor();
   setupBomba();
   setupEbulidor();
-  */
  
-}
+ 
+}*/
 
 void loop() {
   
@@ -811,7 +810,7 @@ void loop() {
   for (int i = 0; i < 5; i++)  
     pedidoTeste.sabores[i] = 1;
   
-  modoTeste();
+  //modoTeste();
   
   prepararPedido(pedidoTeste);
   exit(0);
