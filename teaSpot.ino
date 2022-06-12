@@ -1,5 +1,7 @@
 #include <Servo.h>
 #include <AccelStepper.h>
+#include <Stepper.h>
+
 
 #define CHA sabor1
 #define TODDY sabor2
@@ -37,7 +39,7 @@
 #define SIG_MUX1 12
 #define SIG_MUX2 13
 
-
+const int enables = [ELEVADOR, EN_S1, EN_S2, EN_S3, EN_S4, EN_S5];
 
 const int servoMexedorInicial = 0;
 const int servoMexedorFinal = 90;
@@ -75,7 +77,7 @@ bool isArquimedesEnabled = 0;*/
 
 //portas motor elevador
 bool isElevadorEnabled = 0;
-AccelStepper motorPasso(1, step, dir);
+AccelStepper motorBipolar(1, step, dir);
 bool elevadorDescendo = 1;
 //vide setup
 
@@ -93,7 +95,7 @@ const int tempoElevador = 4500;
 
 struct pedido {
   bool aquecer;
-  bool sabores[5];
+  bool sabores[5]; [0,1,2,3,4]
 };
 /*const int maxLeft = 200;
 const int minLeft = 90;
@@ -140,8 +142,10 @@ void setupEsteira() {
 
 //bool fimCursoElevador;
 void setupElevador(int velocidadeElevador = 800, int aceleracaoElevador = 500) {
+  pinMode(dir, OUTPUT);
+  pinMode(step, OUTPUT);
   //sentidoHorarioElevador = 0;
-  //AccelStepper motorPasso la nos defines
+  //AccelStepper motorBipolar la nos defines
   //int velocidadeElevador = 800; 
   //int aceleracaoElevador = 500;
   seletorMux(FIM_CURSO, mux2);
@@ -155,11 +159,11 @@ void setupElevador(int velocidadeElevador = 800, int aceleracaoElevador = 500) {
 
   }
 
-  motorPasso.setMaxSpeed(velocidadeElevador);
-  motorPasso.setSpeed(velocidadeElevador);
-  motorPasso.setAcceleration(aceleracaoElevador);
+  motorBipolar.setMaxSpeed(velocidadeElevador);
+  motorBipolar.setSpeed(velocidadeElevador);
+  motorBipolar.setAcceleration(aceleracaoElevador);
 
-  digitalWrite(mux1, "HIGH");
+  digitalWrite(mux1, HIGH);
   fimCursoElevador = digitalRead(mux2);
   //Serial.print("Fim de curso do elevador: ");
   //Serial.println(fimCursoElevador);
@@ -173,32 +177,30 @@ void setupBomba() {
   Serial.println("Setup bomba: ok");
 }
 
-
-int vel= 100; 
-  int acel= 100;
-  int sentido_horario = 0;
-  int sentido_antihorario = 0;
-  int numero = 0; 
-
-  // Definicao pino ENABLE
-  int pino_enable = 13;
-
-  // Definicao pinos STEP e DIR
-  AccelStepper motor1(1, 11, 12);
-void setupSabores() {
-  
-
-  pinMode(pino_enable, OUTPUT);
-  // Configuracoes iniciais motor de passo
-  motor1.setMaxSpeed(vel);
-  motor1.setSpeed(vel);
-  motor1.setAcceleration(acel);
-  digitalWrite(pino_enable, "HIGH");
-  
+void setupUnipolar(int stepsPerRevolution = 200, int velocidade = 60) {
+  // initialize the stepper library on pins 8 through 11:
+  //Stepper motorUnipolar(stepsPerRevolution, 8, 9, 10, 11);
+  Stepper motorUnipolar(stepsPerRevolution, A5, A4, A3,A2);
+  myStepper.setSpeed(velocidade);
 }
+
+void setupBipolar(int velocidade = 100, int aceleracao = 100, bool sentidoHorario = 0) {
+
+  pinMode(dir, OUTPUT);
+  pinMode(step, OUTPUT);
+
+  motorBipolar.setMaxSpeed(velocidade);
+  motorBipolar.setSpeed(velocidade);
+  motorBipolar.setAcceleration(aceleracao);
+}
+
+
+
 void levantarMexedor();
-Servo servoMexedor;
+
 void setupMexedor() {
+  seletorMux(SERVO_MIX, mux2);
+  //seletorMux()
   pinMode(MEXEDOR, OUTPUT);
   digitalWrite(MEXEDOR, HIGH);
   servoMexedor.attach(9);
@@ -328,7 +330,7 @@ bool desligarEsteira() {
 void pararElevador() {
   //isElevadorEnabled = 0;
   Serial.println("Parando elevador...");
-  motorPasso.moveTo(0);
+  motorBipolar.moveTo(0);
   digitalWrite(mux1, HIGH);  
   Serial.println("Elevador parado");
 }
@@ -340,7 +342,7 @@ void descerElevador() {
   //elevadorDescendo = 1;  
   //isElevadorEnabled = 1;
   while(/*elevadorDescendo && isElevadorEnabled && */!digitalRead(mux2)) {
-    motorPasso.moveTo(-10000);
+    motorBipolar.moveTo(-10000);
   }
   pararElevador();
 
@@ -361,7 +363,7 @@ void subirElevador() {
   Serial.println("Subindo elevador...");
   int i = 0;
   while() { // TODO WHILE NINGUEM GRITOU
-    motorPasso.moveTo(10000);
+    motorBipolar.moveTo(10000);
     if (!i%1000) {
       Serial.println(i + " passos");
     }
@@ -398,6 +400,12 @@ void desligarEbulidor() {
 
 void levantarMexedor() {
   Serial.println("Levantando mexedor...");
+  Servo servoMexedor;
+  seletorMux(SERVO_MIX, mux2);
+  pinMode(mux2, OUTPUT);
+  //digitalWrite(MEXEDOR, HIGH);
+  servoMexedor.attach(mux2);
+
   for(int i = posServoMexedor; i < servoMexedorFinal; i += 1) {
     posServoMexedor = i;
     servoMexedor.write(posServoMexedor);
@@ -406,9 +414,15 @@ void levantarMexedor() {
   }
   Serial.println("Mexedor levantado");
 }
+
 void abaixarMexedor() {
   Serial.println("Abaixando mexedor...");
-  
+  Servo servoMexedor;
+  seletorMux(SERVO_MIX, mux2);
+  pinMode(mux2, OUTPUT);
+  //digitalWrite(MEXEDOR, HIGH);
+  servoMexedor.attach(mux2);
+
   for(int i = posServoMexedor; i > servoMexedorInicial; i -= 1) {
     posServoMexedor = i;
     servoMexedor.write(posServoMexedor);
@@ -417,21 +431,27 @@ void abaixarMexedor() {
   }  
   Serial.println("Mexedor abaixado");
 }
+
+
 void ligarMexedor() {
-  digitalWrite(MEXEDOR, LOW);
+  seletorMux(MOTOR_MIX, mux2);
+  digitalWrite(mux2, LOW);
   Serial.println("Mexedor ligado");
 }
 void desligarMexedor() {
-  digitalWrite(MEXEDOR, HIGH);  
+  seletorMux(MOTOR_MIX, mux2);
+  digitalWrite(mux2, HIGH); 
   Serial.println("Mexedor desligado");
 }
-void mexer() {
+void mexer(int tempo = 60000) {
   Serial.println("Mexendo bebida...");
   abaixarMexedor();
   delay(500);
+
   ligarMexedor();
-  delay(10*1000);
+  delay(tempo);
   desligarMexedor();
+
   delay(500);
   levantarMexedor();
 }
@@ -457,41 +477,117 @@ void aquecer() {
 } 
 
 
-void error() {
-  Serial.print("Um erro aconteceu!");
-}
 
-void dispensarSabor() {
-  Serial.println("Dispensando sabor...");
-  digitalWrite(pino_enable, LOW);
-  sentido_horario = 1;
-  sentido_antihorario = 0;
+void dispensarSabor(int sabor) {
+  int tempo = 2500;
+  bool sentidoHorario = false;
 
-  int starttime, endtime, loopcount;
-  starttime = millis();
-  endtime = starttime;
-  while ((endtime - starttime) <=2500) // do this loop for up to 1000mS
-  {
-    // code here
-      if (sentido_horario == 1)
-    {
-      motor1.moveTo(10000);
+  seletorMux(enables[sabor], mux1);
+  digitalWrite(mux1, LOW);
+
+  Serial.print("Dispensando sabor ");
+  Serial.println(sabor);
+
+  if(sabor==3 || sabor==4) {
+    //bipolar
+    switch(sabor) {
+      case 3: {
+        setupBipolar(100, 100);
+        tempo = 2500;
+        sentidoHorario = 0;
+        break;
+      }
+       case 4: {
+        setupBipolar(100, 100);
+        tempo = 2500;
+        sentidoHorario = 0;
+        break;
+      }
     }
-    // Move o motor no sentido anti-horario
-    if (sentido_antihorario == 1)
+
+    int starttime, endtime, loopcount;
+    starttime = millis();
+    endtime = starttime;
+    while ((endtime - starttime) <=tempo) // do this loop for up to tempo
     {
-      motor1.moveTo(-10000);
+      // code here
+        if (sentidoHorario) {
+        motorBipolar.moveTo(10000);
+      } else  {
+        motorBipolar.moveTo(-10000);
+      }
+      // Comando para acionar o motor no sentido especificado
+      motorBipolar.run();
+      loopcount = loopcount+1;
+      endtime = millis();
     }
-    // Comando para acionar o motor no sentido especificado
-    motor1.run();
-    loopcount = loopcount+1;
-    endtime = millis();
-  }
-  digitalWrite(pino_enable, HIGH);
+
+  }else if(sabor==1 || sabor==2 || sabor==5) {
+    //unipolar
+    passos = 2000;
+    switch(sabor) {
+      case 1: {
+        sentidoHorario = 0;
+        setupUnipolar(2000);
+        passos = 2000;
+        break;
+      }
+       case 2: {
+        sentidoHorario = 0;
+        setupUnipolar(2000);
+        passos = 2000;
+        break;
+      }
+       case 5: {
+        sentidoHorario = 0;
+        setupUnipolar(2000);
+        passos = 2000;
+        break;
+      }
+
+    }
+
+    if(!sentidoHorario)
+          passos *= -1;
+
+    int stepCount = 0; // number of steps the motor has taken
+       
+    motorUnipolar.step(passos);
+    //stepCount++;
+    //delay(500);
+    //while(stepCount < passos) {   }
+     // step one step:
+    
+  } 
+
+  digitalWrite(mux1, HIGH);   //desliga enable
   //serial.print (loopcount,DEC);
-
   Serial.println("Sabor dispensado");
   }
+
+void playBuzzer() {
+  seletorMux(BUZZER, mux1);
+  delay(1000);
+  int tempo = 400;
+  tone(10,440,tempo); //LA
+  delay(tempo);
+  tone(10,294,tempo); //RE
+  delay(tempo);
+  tone(10,349,tempo/2); //FA - O tempo/2 faz com que demore metade do valor estipulado anteriormente, pois essa parte é mais rápida
+  delay(tempo/2);
+  tone(10,392,tempo/2); //SOL
+  delay(tempo/2);
+  tone(10,440,tempo); //LA
+  delay(tempo);
+  tone(10,294,tempo); //RE
+  delay(tempo);
+  tone(10,349,tempo/2); //FA
+  delay(tempo/2);
+  tone(10,392,tempo/2); //SOL
+  delay(tempo/2);
+  tone(10,330,tempo); //MI
+  delay(tempo);
+}
 
 bool prepararPedido(pedido pedido) {
   // Estação: dispenser de copos
@@ -520,55 +616,46 @@ bool prepararPedido(pedido pedido) {
 
   subirElevador();
   delay(2000);
-//----------------ate aqui tudo ok-----------------------
   //estação: sabores
-  
+  int irs = [IR0, IR1, IR2, IR3, IR4, IR5, IR6];
 
-  for(int s = 0; i < 5; i++) {
+  for(int i = 0; i < 5; i++) {
     ligarEsteira();
     if(pedido.sabores[i]) {
+      while(readMux(irs[i+1], mux2) == HIGH) {
 
+      }
+        desligarEsteira();
+        dispensarSabor(i+i);  //i+1 sim: confia!
+        delay(1000);
     }
   }
-
-  while(readMux(IR0, mux2) == HIGH) {
+  delay(1000);
+  ligarEsteira();
+  while(readMux(IR6, mux2) == HIGH) {
   
   }
   desligarEsteira();
-  if(digitalRead(IRaquecer) == LOW)
-    ligarEsteira();
-  else {
-    error();
-    return 0;
-  }
-  for(int i = 0; i<5; i++) {
-    if(pedido.sabores[i]) {
-        while(digitalRead(IRsabores[i]) == HIGH) {
-       
-      desligarEsteira();
-      dispensarSabor(i);   
-    }
-  }   
- 
-  delay(3000);
-
-  
-  //estação: mexedor
-//  if(digitalRead(IRsabores[0]) == LOW)
-  //  ligarEsteira();
-  //else {
-    //error();
-    //return 0;
- // }
-/*
-  if(digitalRead(IRmexedor) == LOW)
-    desligarEsteira();
-
+  delay(1000);
   mexer();
 
+  delay(2000);
+
+  ligarEsteira();
+  delay(1500);
+  desligarEsteira();
+
+  playBuzzer();
   
-  return 1;*/
-/*}*/
+  }
+  
+//----------------ate aqui tudo ok-----------------------
+
+  
+  return pedido;
+}
+
+
 
 void modoTeste() {
   int comando = 0;
@@ -691,13 +778,13 @@ void modoTeste() {
   }
       
   if(elevadorDescendo && isElevadorEnabled) {
-    motorPasso.moveTo(-10000);
+    motorBipolar.moveTo(-10000);
   } else if(!elevadorDescendo && isElevadorEnabled) {
-    motorPasso.moveTo(10000);  
+    motorBipolar.moveTo(10000);  
   } else if(!isElevadorEnabled) {
     
   }
-  motorPasso.run();
+  motorBipolar.run();
 }
 
 int pedidosNaFila = 0;
