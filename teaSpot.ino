@@ -806,18 +806,13 @@ void setup() {
 
 void loop() {
   
-  /*pedido pedidoTeste;
+  pedido pedidoTeste;
   pedidoTeste.aquecer = 1;
-  pedidoTeste.sabores[0] = 1;
   for (int i = 0; i < 5; i++)  
-    pedidoTeste.sabores[i] = 0;
-  */
-  //funções de teste
+    pedidoTeste.sabores[i] = 1;
   
-  //desligarBomba();  
-  //delay(3000);
   modoTeste();
   
-  //prepararPedido(pedidoTeste);
-  //exit(0);
+  prepararPedido(pedidoTeste);
+  exit(0);
 }
