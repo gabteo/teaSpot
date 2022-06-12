@@ -100,12 +100,25 @@ const int minLeft = 90;
 const int maxRight = 55;
 const int minRight = 21*0.9;*/
 
-//posicoes dos servos do dispenser
-const int maxLeft = 143*1.1;
+//--------------posicoes dos servos do dispenser
+//posicao esticado
+//Lmin Rmax
+const int minLeft = 72;
+const int maxRight = 75;
+
+//posicoa encolhido
+//Lmax Rmin
+const int minRight = 21*1.66;
+const int maxLeft = 143*0.85;
+
+
+/*const int maxLeft = 143*1.1;
 const int minLeft = 100;
 const int maxRight = 55;
 const int minRight = 21*0.9;
 void esticarDispenser();
+*/
+
 
 //------------------FUNÇÕES DE SETUP------------------------//
 void setupCupDispenser() {
@@ -113,37 +126,50 @@ void setupCupDispenser() {
   seletorMux(COPO_R, mux2);
   dispenserLeft.attach(mux1);
   dispenserRight.attach(mux2);
-  encolherDispenser();
+  esticarDispenser();
   Serial.println("Setup cup dipenser: ok");
   return;
 }
 
 void setupEsteira() {
-  pinMode(ESTEIRA, OUTPUT);
-  digitalWrite(ESTEIRA, HIGH);
+  seletorMux(ESTEIRA, mux1);
+  pinMode(mux1, OUTPUT);
+  digitalWrite(mux1, HIGH);
   Serial.println("Setup esteira: ok");
 }
 
-bool fimCursoElevador;
+//bool fimCursoElevador;
 void setupElevador(int velocidadeElevador = 800, int aceleracaoElevador = 500) {
   //sentidoHorarioElevador = 0;
-  //AccelStepper motorElevador la nos defines
+  //AccelStepper motorPasso la nos defines
   //int velocidadeElevador = 800; 
   //int aceleracaoElevador = 500;
-  pinMode(FIM_CURSO_ELEVADOR, INPUT);
-  motorElevador.setMaxSpeed(velocidadeElevador);
-  motorElevador.setSpeed(velocidadeElevador);
-  motorElevador.setAcceleration(aceleracaoElevador);
-  digitalWrite(enElevador, "HIGH");
-  fimCursoElevador = digitalRead(FIM_CURSO_ELEVADOR);
-  Serial.print("Fim de curso do elevador: ");
-  Serial.println(fimCursoElevador);
+  seletorMux(FIM_CURSO, mux2);
+  pinMode(mux2, INPUT);
+
+  seletorMux(ELEVADOR, mux1);
+  pinMode(mux1, OUTPUT);
+
+
+  while(!readMux(FIM_CURSO, mux2)) {
+
+  }
+
+  motorPasso.setMaxSpeed(velocidadeElevador);
+  motorPasso.setSpeed(velocidadeElevador);
+  motorPasso.setAcceleration(aceleracaoElevador);
+
+  digitalWrite(mux1, "HIGH");
+  fimCursoElevador = digitalRead(mux2);
+  //Serial.print("Fim de curso do elevador: ");
+  //Serial.println(fimCursoElevador);
   Serial.println("Setup elevador: ok");
   }
 
 void setupBomba() {
-  pinMode(BOMBA, OUTPUT);
-  digitalWrite(BOMBA, HIGH); 
+  seletorMux(BOMBA, mux2);
+  pinMode(mux2, OUTPUT);
+  digitalWrite(mux2, HIGH); 
   Serial.println("Setup bomba: ok");
 }
 
@@ -183,8 +209,9 @@ void setupMexedor() {
 }
 
 void setupEbulidor() {
-  pinMode(EBULIDOR, OUTPUT);
-  digitalWrite(EBULIDOR, HIGH);
+  seletorMux(EBULIDOR, mux2);
+  pinMode(mux2, OUTPUT);
+  digitalWrite(mux2, HIGH);
   Serial.println("Setup ebulidor: ok");  
 }
 
@@ -253,21 +280,23 @@ int readMux(int channel, int muxSel){ //muxSel aceita variaveis mux1 ou mux2
 
 //------------------FUNÇÕES DE LIGAR/DESLIGAR------------------------//
 void esticarDispenser() {
-  for (float posL = maxLeft, posR = minRight; posL>minLeft || posR<maxRight; posL -= 1.26, posR +=1) {
+  for (float posL = maxLeft, posR = minRight; posL>minLeft || posR<maxRight; posL -= 1.22, posR +=1) {
     if(posL > minLeft)
       dispenserLeft.write(posL);
     if(posR < maxRight)
-      dispenserRight.write(posR);    
+      dispenserRight.write(posR); 
+      delay(50);   
   } //termina em Lmin Rmax
   //dispenserLeft.write(100);
   //dispenserRight.write(55);  
 }
 void encolherDispenser() {
-  for (float posL = minLeft, posR = maxRight; posL<maxLeft || posR>minRight; posL += 1.26, posR -=1) {
+  for (float posL = minLeft, posR = maxRight; posL<maxLeft || posR>minRight; posL += 1.22, posR -=1) {
     if(posL < maxLeft)
       dispenserLeft.write(posL);
     if(posR > minRight)
-      dispenserRight.write(posR);    
+      dispenserRight.write(posR);  
+      delay(50);  
   } //termina em Lmax Rmin
   //dispenserLeft.write(143);
   //dispenserRight.write(21);
@@ -275,67 +304,94 @@ void encolherDispenser() {
 
 void dispensarCopo() {
   setupCupDispenser();
-  esticarDispenser();
-  delay(1500);
+  
   encolherDispenser();
+  delay(2000);
+  esticarDispenser();
   Serial.println("Copo dispensado");
   return;
 }
 
 bool ligarEsteira() {
-  digitalWrite(ESTEIRA, LOW);
+  setupEsteira();
+  seletorMux(ESTEIRA, mux1);
+  digitalWrite(mux1, LOW);  //logica negativa
   Serial.println("Esteira ligada");
 }
 
 bool desligarEsteira() {
-  digitalWrite(ESTEIRA, HIGH);
+  seletorMux(ESTEIRA, mux1);
+  digitalWrite(mux1, HIGH);
   Serial.println("Esteira desligada");
 }
 
 void pararElevador() {
-  isElevadorEnabled = 0;
+  //isElevadorEnabled = 0;
   Serial.println("Parando elevador...");
-  motorElevador.moveTo(0);
-  digitalWrite(enElevador, HIGH);  
+  motorPasso.moveTo(0);
+  digitalWrite(mux1, HIGH);  
   Serial.println("Elevador parado");
 }
 void descerElevador() {
+  setupElevador();
   //descer elevador: sentido horário
-  if(!fimCursoElevador) {
+  digitalWrite(mux1, LOW);
+  Serial.println("Descendo elevador...");
+  //elevadorDescendo = 1;  
+  //isElevadorEnabled = 1;
+  while(/*elevadorDescendo && isElevadorEnabled && */!digitalRead(mux2)) {
+    motorPasso.moveTo(-10000);
+  }
+  pararElevador();
+
+  /*if(!fimCursoElevador) {
     elevadorDescendo = 1;  
     isElevadorEnabled = 1;
     digitalWrite(enElevador, LOW);
   } else {
     pararElevador();
-  }
-  Serial.println("Descendo elevador...");
+  }*/
 }
 
 void subirElevador() {
-  elevadorDescendo = 0;  
-  isElevadorEnabled = 1;
-  digitalWrite(enElevador, LOW);
+  setupElevador();
+  //elevadorDescendo = 0;  
+  //isElevadorEnabled = 1;
+  digitalWrite(mux1, LOW);
   Serial.println("Subindo elevador...");
+  int i = 0;
+  while() { // TODO WHILE NINGUEM GRITOU
+    motorPasso.moveTo(10000);
+    if (!i%1000) {
+      Serial.println(i + " passos");
+    }
+  }
+  pararElevador();
   //subir elevador
   //delay(tempoElevador);
   //parar elevador
 }
 
 void ligarBomba() {
-  digitalWrite(BOMBA, LOW);
+  setupBomba();
+  digitalWrite(mux2, LOW);
   Serial.println("Bomba ligada");
   }
 void desligarBomba() {
-  digitalWrite(BOMBA, HIGH);
+  setupBomba();
+  digitalWrite(mux2, HIGH);
+  //digitalWrite(BOMBA, HIGH);
   Serial.println("Bomba desligada");
 }
 
 void ligarEbulidor() {
-  digitalWrite(EBULIDOR, LOW);
+  setupEbulidor();
+  digitalWrite(mux2, LOW);
   Serial.println("Ebulidor ligado");
 }
 void desligarEbulidor() {
-  digitalWrite(EBULIDOR, HIGH);
+  setupEbulidor();
+  digitalWrite(mux2, HIGH);
   Serial.println("Ebulidor desligado");
 }
 
@@ -393,7 +449,7 @@ void encherCopo() {
 
 void aquecer() {
   ligarEbulidor();
-  delay(15000);
+  delay(20000);
 
   //if temperatura
   desligarEbulidor();
@@ -436,29 +492,27 @@ void dispensarSabor() {
 
   Serial.println("Sabor dispensado");
   }
-/*
+
 bool prepararPedido(pedido pedido) {
   // Estação: dispenser de copos
   dispensarCopo();
   delay(3000);
 
-  if(digitalRead(IRdispenser) == LOW)
-    ligarEsteira();
-  else {
-    error();
-    return 0;
+  ligarEsteira();
+
+  while(readMux(IR0, mux2) == HIGH) {
+  
   }
+  desligarEsteira();
+  
 
-
-  //estação: água e aquecimento
-  if(digitalRead(IRaquecer) == LOW)
-    desligarEsteira();
-
+  //-------estação: água e aquecimento------
+  delay(1000);
   descerElevador();
   delay(2000);
 
   encherCopo();
-  delay(3000);
+  delay(2000);
 
   if(pedido.aquecer)
     aquecer();
@@ -466,8 +520,21 @@ bool prepararPedido(pedido pedido) {
 
   subirElevador();
   delay(2000);
-
+//----------------ate aqui tudo ok-----------------------
   //estação: sabores
+  
+
+  for(int s = 0; i < 5; i++) {
+    ligarEsteira();
+    if(pedido.sabores[i]) {
+
+    }
+  }
+
+  while(readMux(IR0, mux2) == HIGH) {
+  
+  }
+  desligarEsteira();
   if(digitalRead(IRaquecer) == LOW)
     ligarEsteira();
   else {
@@ -483,7 +550,7 @@ bool prepararPedido(pedido pedido) {
     }
   }   
  
-  delay(3000);*/
+  delay(3000);
 
   
   //estação: mexedor
@@ -624,13 +691,13 @@ void modoTeste() {
   }
       
   if(elevadorDescendo && isElevadorEnabled) {
-    motorElevador.moveTo(-10000);
+    motorPasso.moveTo(-10000);
   } else if(!elevadorDescendo && isElevadorEnabled) {
-    motorElevador.moveTo(10000);  
+    motorPasso.moveTo(10000);  
   } else if(!isElevadorEnabled) {
     
   }
-  motorElevador.run();
+  motorPasso.run();
 }
 
 int pedidosNaFila = 0;
