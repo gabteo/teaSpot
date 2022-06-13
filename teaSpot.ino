@@ -19,27 +19,31 @@
 #define EN_S4 5
 #define ELEVADOR 6
 #define COPO_L 7
-#define ESTEIRA 2
+#define ESTEIRA 8
 
 
 //MUX2
-#define BOMBA 0
-#define EBULIDOR 1
-
-#define IR0 0
-#define IR1 1
-#define IR2 2
-#define IR3 3
-#define IR4 4
-#define IR5 5
-#define IR6 6
-
-#define SONDA 7
-#define COPO_R 8
-#define SERVO_MIX 9
-#define FIM_CURSO 10
-
+#define FIM_CURSO 0
+#define BOMBA 1
+#define EBULIDOR 2
 #define MOTOR_MIX 3
+
+#define IR0 4
+#define IR1 5
+#define IR2 6
+#define IR3 7
+#define IR4 8
+#define IR5 9
+#define IR6 10
+
+#define COPO_R 11
+#define SERVO_MIX 12
+//13 nao conectado
+//#define SONDA 14
+//15 nao conectado
+
+
+
 
 //MUX NO ARDUINO------------------------
 #define SIG_MUX1 12
