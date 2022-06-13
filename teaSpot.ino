@@ -8,8 +8,9 @@
 #define ACUCAR sabor4
 #define ADOCANTE sabor5
 
-//-------------DEFINES MUX--------------------//
+//-------------DEFINES MUX---------------//
 
+//MUX1
 #define BUZZER 0
 #define EN_S1 1
 #define EN_S5 2
@@ -18,7 +19,12 @@
 #define EN_S4 5
 #define ELEVADOR 6
 #define COPO_L 7
-#define ESTEIRA 8
+#define ESTEIRA 2
+
+
+//MUX2
+#define BOMBA 0
+#define EBULIDOR 1
 
 #define IR0 0
 #define IR1 1
@@ -32,12 +38,16 @@
 #define COPO_R 8
 #define SERVO_MIX 9
 #define FIM_CURSO 10
-#define BOMBA 11
-#define EBULIDOR 12
-#define MOTOR_MIX 14
 
+#define MOTOR_MIX 3
+
+//MUX NO ARDUINO------------------------
 #define SIG_MUX1 12
 #define SIG_MUX2 13
+
+#define EN_MUX1 A1
+#define EN_MUX2 A0
+//--------------------------------------
 
 const int enables[] = {ELEVADOR, EN_S1, EN_S2, EN_S3, EN_S4, EN_S5};
 
@@ -88,7 +98,7 @@ const int sabor1Pin2A = 9;
 const int sabor1Pin2B = 8;
 */
 
-
+int readMux(int channel, int muxSel, bool pullup = true);
 
 Servo dispenserLeft, dispenserRight;
 const int tempoElevador = 4500;
@@ -177,7 +187,7 @@ void setupBomba() {
   Serial.println("Setup bomba: ok");
 }
 
-int stepsPerRevolution = 200
+int stepsPerRevolution = 200;
 Stepper motorUnipolar(stepsPerRevolution, A5, A4, A3,A2);
 void setupUnipolar(int stepsPerRevolution = 200, int velocidade = 60) {
   // initialize the stepper library on pins 8 through 11:
@@ -241,6 +251,12 @@ void setutMUX1() {
 //-----------------FUNCOES TECNICAS/MUX-------------------------//
 
 int seletorMux(int channel, int muxSel){ //muxSel aceita variaveis mux1 ou mux2
+if(muxSel==mux1) {
+  digitalWrite(EN_MUX1, LOW);
+} else if(muxSel==mux2) {
+  digitalWrite(EN_MUX2, LOW);
+}
+
   int controlPin[2][4] = {
     {s0mux1, s1mux1, s2mux1, s3mux1},
     {s0mux2, s1mux2, s2mux2, s3mux2}
@@ -272,13 +288,26 @@ int seletorMux(int channel, int muxSel){ //muxSel aceita variaveis mux1 ou mux2
   return muxSel;
 }
 
-int readMux(int channel, int muxSel){ //muxSel aceita variaveis mux1 ou mux2
+int readMux(int channel, int muxSel, bool pullup = true){ //muxSel aceita variaveis mux1 ou mux2
+  if(pullup) {
+    pinMode(muxSel, INPUT_PULLUP);
+  } else {
+    pinMode(muxSel, INPUT);
+  }  
+  
   seletorMux(channel, muxSel);
 
   //read the value at the SIG pin
   int val = digitalRead(muxSel);
 
-  //return the value
+  //disable mux
+  if(muxSel==mux1) {
+    digitalWrite(EN_MUX1, HIGH);
+  } else if(muxSel==mux2) {
+    digitalWrite(EN_MUX2, HIGH);
+  }
+
+
   return val;
 }
 
@@ -319,6 +348,7 @@ void dispensarCopo() {
 bool ligarEsteira() {
   setupEsteira();
   seletorMux(ESTEIRA, mux1);
+ 
   digitalWrite(mux1, LOW);  //logica negativa
   Serial.println("Esteira ligada");
 }
@@ -591,9 +621,18 @@ void playBuzzer() {
   delay(tempo);
 }
 
+void desativarMUX(int muxSel) {
+  if(muxSel==mux1) {
+    digitalWrite(EN_MUX1, HIGH);
+  } else if(muxSel==mux2) {
+    digitalWrite(EN_MUX2, HIGH);
+  }
+}
+
 void prepararPedido(pedido pedido) {
   // Estação: dispenser de copos
   dispensarCopo();
+  
   delay(3000);
 
   ligarEsteira();
@@ -787,10 +826,13 @@ void modoTeste() {
 }
 *//*
 int pedidosNaFila = 0;
-
+*/
 void setup() {
   Serial.begin(9600);
-*/
+  pinMode(EN_MUX1, OUTPUT);
+  pinMode(EN_MUX2, OUTPUT);
+  digitalWrite(EN_MUX1, HIGH);
+  digitalWrite(EN_MUX2, HIGH);
 /*
   setupEsteira();
   setupCupDispenser();
@@ -799,12 +841,13 @@ void setup() {
   setupMexedor();
   setupBomba();
   setupEbulidor();
- 
- 
-}*/
+
+ */
+}
 
 void loop() {
-  
+  desativarMUX(mux1);
+  desativarMUX(mux2);
   pedido pedidoTeste;
   pedidoTeste.aquecer = 1;
   for (int i = 0; i < 5; i++)  
