@@ -72,8 +72,8 @@
 
 
 //MUX NO ARDUINO------------------------
-#define SIG_MUX1 12
-#define SIG_MUX2 13
+#define SIG_MUX1 12 
+#define SIG_MUX2 13 
 
 #define EN_MUX1 A1
 #define EN_MUX2 A0
@@ -105,7 +105,7 @@ const int mux2 = SIG_MUX2;
 
 //portas motores bipolares
 const int dir = 10;
-const int step = 11;
+const int step = 11; 
 
 
 //portas motor arquimedes demonstraão
@@ -128,7 +128,7 @@ const int sabor1Pin2A = 9;
 const int sabor1Pin2B = 8;
 */
 
-int readMux(int channel, int muxSel, bool pullup = true);
+int readMux(int channel, int muxSel/*, bool pullup = true*/);
 
 Servo dispenserLeft, dispenserRight;
 const int tempoElevador = 4500;
@@ -217,7 +217,7 @@ void setupElevador(int velocidadeElevador = 800, int aceleracaoElevador = 500) {
 void setupBomba() {
   seletorMux(BOMBA, MUX_BOMBA);
   pinMode(MUX_BOMBA, OUTPUT);
-  digitalWrite(muMUX_BOMBAx2, HIGH); 
+  digitalWrite(MUX_BOMBA, HIGH); 
   Serial.println("Setup bomba: ok");
 }
 
@@ -309,13 +309,13 @@ void setupMUX() {
 //-----------------FUNCOES TECNICAS/MUX-------------------------//
 
 int seletorMux(int channel, int muxSel){ //muxSel aceita variaveis mux1 ou mux2
-if(muxSel==mux1) {
-  digitalWrite(EN_MUX1, LOW);
-  Serial.println("MUX 1 habilitado");
-} else if(muxSel==mux2) {
-  digitalWrite(EN_MUX2, LOW);
-  Serial.println("MUX 2 habilitado");
-}
+  if(muxSel==mux1) {
+    digitalWrite(EN_MUX1, LOW);
+    Serial.println("MUX 1 habilitado");
+  } else if(muxSel==mux2) {
+    digitalWrite(EN_MUX2, LOW);
+    Serial.println("MUX 2 habilitado");
+  }
 
   int controlPin[2][4] = {
     {s0mux1, s1mux1, s2mux1, s3mux1},
@@ -342,21 +342,30 @@ if(muxSel==mux1) {
   };
 
   //loop through the 4 sig
-  for(int i = 0; i < 4; i ++){
-    digitalWrite(controlPin[muxSel][i], muxChannel[channel][i]);
+
+  if(muxSel==mux1) {
+    for(int i = 0; i < 4; i ++){
+      digitalWrite(controlPin[0][i], muxChannel[channel][i]);
+    }
+  } else if(muxSel==mux2) {
+    for(int i = 0; i < 4; i ++){
+      digitalWrite(controlPin[1][i], muxChannel[channel][i]);
+    }
   }
+  
 
   Serial.print("Selecionado o canal ");
   Serial.print(channel);
   Serial.print(" do mux ");
   if(muxSel == mux1) {
-    Serial.print("1.");
+    Serial.println("1.");
   } else 
-    Serial.print("2.");
+    Serial.println("2.");
   return muxSel;
 }
 
-int readMux(int channel, int muxSel, bool pullup = false){ //muxSel aceita variaveis mux1 ou mux2
+int readMux(int channel, int muxSel/*, bool pullup = false*/){ //muxSel aceita variaveis mux1 ou mux2
+  bool pullup = 0;
   if(pullup) {
     pinMode(muxSel, INPUT_PULLUP);
   } else {
@@ -714,10 +723,14 @@ void prepararPedido(pedido pedido) {
   delay(50);
   while(readMux(IR0, MUX_IR0) == HIGH) {
   }
-  desligarEsteira();
-  
+  //desligarEsteira();
+  desativarMUX(MUX_ESTEIRA);
+  if(readMux(IR0, MUX_IR0)== LOW) {
+    Serial.println("Copo detectado no aquecimento");
+  }
+  delay(5000); //delay de debug
   //-------estação: água e aquecimento------
-  delay(1000);
+  /*delay(1000);
   descerElevador();
   delay(2000);
 
@@ -729,8 +742,9 @@ void prepararPedido(pedido pedido) {
   delay(2000);
 
   subirElevador();
-  delay(2000);
-  //estação: sabores
+  delay(2000);*/
+
+  //------------------estação: SABORES----------
   int irs[] = {IR0, IR1, IR2, IR3, IR4, IR5, IR6};
 
   for(int i = 0; i < 5; i++) {
@@ -739,25 +753,38 @@ void prepararPedido(pedido pedido) {
       while(readMux(irs[i+1], MUX_IRS) == HIGH) {
 
       }
-        desligarEsteira();
-        dispensarSabor(i+i);  //i+1 sim: confia!
+        desativarMUX(MUX_ESTEIRA);
+        //desligarEsteira();
+        if(readMux(IR0, MUX_IR0)== LOW) {
+          Serial.print("Copo detectado no IR ");
+          Serial.println(i+1);
+        }
+        //dispensarSabor(i+i);  //i+1 sim: confia!
         delay(1000);
     }
   }
+
+  //----------ESTAÇÃO MEXEDOR-------------//
   delay(1000);
   ligarEsteira();
   while(readMux(IR6, MUX_IR6) == HIGH) {
-  
   }
-  desligarEsteira();
+  desativarMUX(MUX_ESTEIRA);
+  //desligarEsteira();
+  if(readMux(IR0, MUX_IR0)== LOW) {
+    Serial.println("Copo detectado no mexedor");
+  }
   delay(1000);
-  mexer();
+  //mexer();
 
   delay(2000);
 
+
+  //-------------ESTAÇÃO ENTREGA------------
   ligarEsteira();
   delay(1500);
-  desligarEsteira();
+  desativarMUX(MUX_ESTEIRA);
+  //desligarEsteira();
 
   playBuzzer();
   
@@ -903,7 +930,7 @@ int pedidosNaFila = 0;
 void setup() {
   Serial.begin(9600);
   setupMUX();
-
+  //FAZER: processo de inicialização e modo de abastecimento
   
 /*
   setupEsteira();
@@ -928,5 +955,18 @@ void loop() {
   //modoTeste();
   
   prepararPedido(pedidoTeste);
+/*
+  seletorMux(8, mux1); //confunde com 2
+  pinMode(mux1, OUTPUT);
+  seletorMux(8, mux2); //confunde com 1
+  pinMode(mux2, OUTPUT);
+
+  
+  
+  digitalWrite(mux1, HIGH);
+  digitalWrite(mux2, HIGH);
+  Serial.println("aaa");
+  while(true) {}
+*/
   exit(0);
 }
