@@ -479,7 +479,8 @@ void subirElevador() {
   while(true) { // TODO WHILE NINGUEM GRITOU
     motorBipolar.moveTo(10000);
     if (!i%1000) {
-      Serial.println(i + " passos");
+      Serial.print(i);
+      Serial.println(" passos");
     }
   }
   pararElevador();
@@ -730,7 +731,7 @@ void prepararPedido(pedido pedido) {
   }
   delay(5000); //delay de debug
   //-------estação: água e aquecimento------
-  /*delay(1000);
+  delay(1000);
   descerElevador();
   delay(2000);
 
@@ -742,7 +743,7 @@ void prepararPedido(pedido pedido) {
   delay(2000);
 
   subirElevador();
-  delay(2000);*/
+  delay(2000);
 
   //------------------estação: SABORES----------
   int irs[] = {IR0, IR1, IR2, IR3, IR4, IR5, IR6};
