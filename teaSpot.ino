@@ -21,12 +21,27 @@
 #define COPO_L 7
 #define ESTEIRA 8
 
+#define MUX_BUZZER mux1
+#define MUX_EN_S1 mux1
+#define MUX_EN_S5 mux1
+#define MUX_EN_S2 mux1
+#define MUX_EN_S3 mux1
+#define MUX_EN_S4 mux1
+#define MUX_ELEVADOR mux1
+#define MUX_COPO_L mux1
+#define MUX_ESTEIRA mux1
+
 
 //MUX2
 #define FIM_CURSO 0
 #define BOMBA 1
 #define EBULIDOR 2
 #define MOTOR_MIX 3
+
+#define MUX_FIM_CURSO mux2
+#define MUX_BOMBA mux2
+#define MUX_EBULIDOR mux2
+#define MUX_MOTOR_MIX mux2
 
 #define IR0 4
 #define IR1 5
@@ -35,9 +50,18 @@
 #define IR4 8
 #define IR5 9
 #define IR6 10
+#define MUX_IR0 mux2
+#define MUX_IR1 mux2
+#define MUX_IR2 mux2
+#define MUX_IR3 mux2
+#define MUX_IR4 mux2
+#define MUX_IR5 mux2
+#define MUX_IR6 mux2
 
 #define COPO_R 11
 #define SERVO_MIX 12
+#define MUX_COPO_R mux2
+#define MUX_SERVO_MIX mux2
 //13 nao conectado
 //#define SONDA 14
 //15 nao conectado
@@ -140,6 +164,10 @@ void esticarDispenser();
 void setupCupDispenser() {
   seletorMux(COPO_L, mux1);
   seletorMux(COPO_R, mux2);
+
+  pinMode(mux1, OUTPUT);
+  pinMode(mux2, OUTPUT);
+
   dispenserLeft.attach(mux1);
   dispenserRight.attach(mux2);
   esticarDispenser();
@@ -227,13 +255,14 @@ void setupMexedor() {
 }*/
 
 void setupEbulidor() {
-  seletorMux(EBULIDOR, mux2);
-  pinMode(mux2, OUTPUT);
-  digitalWrite(mux2, HIGH);
+  seletorMux(EBULIDOR, MUX_EBULIDOR);
+  pinMode(MUX_EBULIDOR, OUTPUT);
+  digitalWrite(MUX_EBULIDOR, HIGH);
   Serial.println("Setup ebulidor: ok");  
 }
 
-void setutMUX1() {
+void setupMUX() {
+  //SETUP MUX1
   pinMode(s0mux1, OUTPUT); 
   pinMode(s1mux1, OUTPUT); 
   pinMode(s2mux1, OUTPUT); 
@@ -249,6 +278,29 @@ void setutMUX1() {
   digitalWrite(mux1, LOW); 
   
   Serial.println("Setup MUX1: ok");
+
+  //SETUP MUX2
+  pinMode(s0mux2, OUTPUT); 
+  pinMode(s1mux2, OUTPUT); 
+  pinMode(s2mux2, OUTPUT); 
+  pinMode(s3mux2, OUTPUT); 
+
+  pinMode(mux1, OUTPUT); 
+
+  digitalWrite(s0mux2, LOW);
+  digitalWrite(s1mux2, LOW);
+  digitalWrite(s2mux2, LOW);
+  digitalWrite(s3mux2, LOW);
+
+  digitalWrite(mux2, LOW); 
+  
+  Serial.println("Setup MUX2: ok");
+
+  //ENABLES MUXES
+  pinMode(EN_MUX1, OUTPUT);
+  pinMode(EN_MUX2, OUTPUT);
+  digitalWrite(EN_MUX1, HIGH);
+  digitalWrite(EN_MUX2, HIGH);
 }
 
 
@@ -257,8 +309,10 @@ void setutMUX1() {
 int seletorMux(int channel, int muxSel){ //muxSel aceita variaveis mux1 ou mux2
 if(muxSel==mux1) {
   digitalWrite(EN_MUX1, LOW);
+  Serial.println("MUX 1 habilitado");
 } else if(muxSel==mux2) {
   digitalWrite(EN_MUX2, LOW);
+  Serial.println("MUX 2 habilitado");
 }
 
   int controlPin[2][4] = {
@@ -289,10 +343,18 @@ if(muxSel==mux1) {
   for(int i = 0; i < 4; i ++){
     digitalWrite(controlPin[muxSel][i], muxChannel[channel][i]);
   }
+
+  Serial.print("Selecionado o canal ");
+  Serial.print(channel);
+  Serial.print(" do mux ");
+  if(muxSel == mux1) {
+    Serial.print("1.");
+  } else 
+    Serial.print("2.");
   return muxSel;
 }
 
-int readMux(int channel, int muxSel, bool pullup = true){ //muxSel aceita variaveis mux1 ou mux2
+int readMux(int channel, int muxSel, bool pullup = false){ //muxSel aceita variaveis mux1 ou mux2
   if(pullup) {
     pinMode(muxSel, INPUT_PULLUP);
   } else {
@@ -307,8 +369,10 @@ int readMux(int channel, int muxSel, bool pullup = true){ //muxSel aceita variav
   //disable mux
   if(muxSel==mux1) {
     digitalWrite(EN_MUX1, HIGH);
+    Serial.println("MUX 1 desabilitado");
   } else if(muxSel==mux2) {
     digitalWrite(EN_MUX2, HIGH);
+    Serial.println("MUX 2 desabilitado");
   }
 
 
@@ -352,13 +416,16 @@ void dispensarCopo() {
 bool ligarEsteira() {
   setupEsteira();
   seletorMux(ESTEIRA, mux1);
- 
+  
+  pinMode(mux1, OUTPUT);
   digitalWrite(mux1, LOW);  //logica negativa
   Serial.println("Esteira ligada");
 }
 
 bool desligarEsteira() {
   seletorMux(ESTEIRA, mux1);
+
+  pinMode(mux1, OUTPUT);
   digitalWrite(mux1, HIGH);
   Serial.println("Esteira desligada");
 }
@@ -412,12 +479,12 @@ void subirElevador() {
 
 void ligarBomba() {
   setupBomba();
-  digitalWrite(mux2, LOW);
+  digitalWrite(MUX_BOMBA, LOW);
   Serial.println("Bomba ligada");
   }
 void desligarBomba() {
   setupBomba();
-  digitalWrite(mux2, HIGH);
+  digitalWrite(MUX_BOMBA, HIGH);
   //digitalWrite(BOMBA, HIGH);
   Serial.println("Bomba desligada");
 }
@@ -640,13 +707,11 @@ void prepararPedido(pedido pedido) {
   delay(3000);
 
   ligarEsteira();
-
+  delay(50);
   while(readMux(IR0, mux2) == HIGH) {
-  
   }
   desligarEsteira();
   
-
   //-------estação: água e aquecimento------
   delay(1000);
   descerElevador();
@@ -833,10 +898,9 @@ int pedidosNaFila = 0;
 */
 void setup() {
   Serial.begin(9600);
-  pinMode(EN_MUX1, OUTPUT);
-  pinMode(EN_MUX2, OUTPUT);
-  digitalWrite(EN_MUX1, HIGH);
-  digitalWrite(EN_MUX2, HIGH);
+  setupMUX();
+
+  
 /*
   setupEsteira();
   setupCupDispenser();
