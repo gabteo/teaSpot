@@ -27,6 +27,7 @@
 #define MUX_EN_S2 mux1
 #define MUX_EN_S3 mux1
 #define MUX_EN_S4 mux1
+#define MUX_ENABLES mux1
 #define MUX_ELEVADOR mux1
 #define MUX_COPO_L mux1
 #define MUX_ESTEIRA mux1
@@ -57,6 +58,7 @@
 #define MUX_IR4 mux2
 #define MUX_IR5 mux2
 #define MUX_IR6 mux2
+#define MUX_IRS mux2
 
 #define COPO_R 11
 #define SERVO_MIX 12
@@ -162,23 +164,23 @@ void esticarDispenser();
 
 //------------------FUNÇÕES DE SETUP------------------------//
 void setupCupDispenser() {
-  seletorMux(COPO_L, mux1);
-  seletorMux(COPO_R, mux2);
+  seletorMux(COPO_L, MUX_COPO_L);
+  seletorMux(COPO_R, MUX_COPO_R);
 
-  pinMode(mux1, OUTPUT);
-  pinMode(mux2, OUTPUT);
+  pinMode(MUX_COPO_L, OUTPUT);
+  pinMode(MUX_COPO_R, OUTPUT);
 
-  dispenserLeft.attach(mux1);
-  dispenserRight.attach(mux2);
+  dispenserLeft.attach(MUX_COPO_L);
+  dispenserRight.attach(MUX_COPO_R);
   esticarDispenser();
   Serial.println("Setup cup dipenser: ok");
   return;
 }
 
 void setupEsteira() {
-  seletorMux(ESTEIRA, mux1);
-  pinMode(mux1, OUTPUT);
-  digitalWrite(mux1, HIGH);
+  seletorMux(ESTEIRA, MUX_ESTEIRA);
+  pinMode(MUX_ESTEIRA, OUTPUT);
+  digitalWrite(MUX_ESTEIRA, HIGH);
   Serial.println("Setup esteira: ok");
 }
 
@@ -190,14 +192,14 @@ void setupElevador(int velocidadeElevador = 800, int aceleracaoElevador = 500) {
   //AccelStepper motorBipolar la nos defines
   //int velocidadeElevador = 800; 
   //int aceleracaoElevador = 500;
-  seletorMux(FIM_CURSO, mux2);
-  pinMode(mux2, INPUT);
+  seletorMux(FIM_CURSO, MUX_FIM_CURSO);
+  pinMode(MUX_FIM_CURSO, INPUT);
 
-  seletorMux(ELEVADOR, mux1);
-  pinMode(mux1, OUTPUT);
+  seletorMux(ELEVADOR, MUX_ELEVADOR);
+  pinMode(MUX_ELEVADOR, OUTPUT);
 
 
-  while(!readMux(FIM_CURSO, mux2)) {
+  while(!readMux(FIM_CURSO, MUX_FIM_CURSO)) {
 
   }
 
@@ -205,17 +207,17 @@ void setupElevador(int velocidadeElevador = 800, int aceleracaoElevador = 500) {
   motorBipolar.setSpeed(velocidadeElevador);
   motorBipolar.setAcceleration(aceleracaoElevador);
 
-  digitalWrite(mux1, HIGH);
-  fimCursoElevador = digitalRead(mux2);
+  digitalWrite(MUX_ELEVADOR, HIGH);
+  //fimCursoElevador = digitalRead(mux2);
   //Serial.print("Fim de curso do elevador: ");
   //Serial.println(fimCursoElevador);
   Serial.println("Setup elevador: ok");
   }
 
 void setupBomba() {
-  seletorMux(BOMBA, mux2);
-  pinMode(mux2, OUTPUT);
-  digitalWrite(mux2, HIGH); 
+  seletorMux(BOMBA, MUX_BOMBA);
+  pinMode(MUX_BOMBA, OUTPUT);
+  digitalWrite(muMUX_BOMBAx2, HIGH); 
   Serial.println("Setup bomba: ok");
 }
 
@@ -415,18 +417,18 @@ void dispensarCopo() {
 
 bool ligarEsteira() {
   setupEsteira();
-  seletorMux(ESTEIRA, mux1);
+  seletorMux(ESTEIRA, MUX_ESTEIRA);
   
-  pinMode(mux1, OUTPUT);
-  digitalWrite(mux1, LOW);  //logica negativa
+  pinMode(MUX_ESTEIRA, OUTPUT);
+  digitalWrite(MUX_ESTEIRA, LOW);  //logica negativa
   Serial.println("Esteira ligada");
 }
 
 bool desligarEsteira() {
-  seletorMux(ESTEIRA, mux1);
+  seletorMux(ESTEIRA, MUX_ESTEIRA);
 
-  pinMode(mux1, OUTPUT);
-  digitalWrite(mux1, HIGH);
+  pinMode(MUX_ESTEIRA, OUTPUT);
+  digitalWrite(MUX_ESTEIRA, HIGH);
   Serial.println("Esteira desligada");
 }
 
@@ -434,17 +436,17 @@ void pararElevador() {
   //isElevadorEnabled = 0;
   Serial.println("Parando elevador...");
   motorBipolar.moveTo(0);
-  digitalWrite(mux1, HIGH);  
+  digitalWrite(MUX_ELEVADOR, HIGH);  
   Serial.println("Elevador parado");
 }
 void descerElevador() {
   setupElevador();
   //descer elevador: sentido horário
-  digitalWrite(mux1, LOW);
+  digitalWrite(MUX_ELEVADOR, LOW);
   Serial.println("Descendo elevador...");
   //elevadorDescendo = 1;  
   //isElevadorEnabled = 1;
-  while(/*elevadorDescendo && isElevadorEnabled && */!digitalRead(mux2)) {
+  while(/*elevadorDescendo && isElevadorEnabled && */!digitalRead(MUX_FIM_CURSO)) {
     motorBipolar.moveTo(-10000);
   }
   pararElevador();
@@ -462,7 +464,7 @@ void subirElevador() {
   setupElevador();
   //elevadorDescendo = 0;  
   //isElevadorEnabled = 1;
-  digitalWrite(mux1, LOW);
+  digitalWrite(MUX_ELEVADOR, LOW);
   Serial.println("Subindo elevador...");
   int i = 0;
   while(true) { // TODO WHILE NINGUEM GRITOU
@@ -491,12 +493,12 @@ void desligarBomba() {
 
 void ligarEbulidor() {
   setupEbulidor();
-  digitalWrite(mux2, LOW);
+  digitalWrite(MUX_EBULIDOR, LOW);
   Serial.println("Ebulidor ligado");
 }
 void desligarEbulidor() {
   setupEbulidor();
-  digitalWrite(mux2, HIGH);
+  digitalWrite(MUX_EBULIDOR, HIGH);
   Serial.println("Ebulidor desligado");
 }
 
@@ -504,10 +506,10 @@ void desligarEbulidor() {
 void levantarMexedor() {
   Serial.println("Levantando mexedor...");
   Servo servoMexedor;
-  seletorMux(SERVO_MIX, mux2);
-  pinMode(mux2, OUTPUT);
+  seletorMux(SERVO_MIX, MUX_SERVO_MIX);
+  pinMode(MUX_SERVO_MIX, OUTPUT);
   //digitalWrite(MEXEDOR, HIGH);
-  servoMexedor.attach(mux2);
+  servoMexedor.attach(MUX_SERVO_MIX);
 
   for(int i = posServoMexedor; i < servoMexedorFinal; i += 1) {
     posServoMexedor = i;
@@ -521,10 +523,10 @@ void levantarMexedor() {
 void abaixarMexedor() {
   Serial.println("Abaixando mexedor...");
   Servo servoMexedor;
-  seletorMux(SERVO_MIX, mux2);
-  pinMode(mux2, OUTPUT);
+  seletorMux(SERVO_MIX, MUX_SERVO_MIX);
+  pinMode(MUX_SERVO_MIX, OUTPUT);
   //digitalWrite(MEXEDOR, HIGH);
-  servoMexedor.attach(mux2);
+  servoMexedor.attach(MUX_SERVO_MIX);
 
   for(int i = posServoMexedor; i > servoMexedorInicial; i -= 1) {
     posServoMexedor = i;
@@ -537,13 +539,15 @@ void abaixarMexedor() {
 
 
 void ligarMexedor() {
-  seletorMux(MOTOR_MIX, mux2);
-  digitalWrite(mux2, LOW);
+  seletorMux(MOTOR_MIX, MUX_MOTOR_MIX);
+  pinMode(MUX_MOTOR_MIX, OUTPUT);
+  digitalWrite(MUX_MOTOR_MIX, LOW);
   Serial.println("Mexedor ligado");
 }
 void desligarMexedor() {
-  seletorMux(MOTOR_MIX, mux2);
-  digitalWrite(mux2, HIGH); 
+  seletorMux(MOTOR_MIX, MUX_MOTOR_MIX);
+  pinMode(MUX_MOTOR_MIX, OUTPUT);
+  digitalWrite(MUX_MOTOR_MIX, HIGH); 
   Serial.println("Mexedor desligado");
 }
 void mexer(int tempo = 60000) {
@@ -585,8 +589,8 @@ void dispensarSabor(int sabor) {
   int tempo = 2500;
   bool sentidoHorario = false;
 
-  seletorMux(enables[sabor], mux1);
-  digitalWrite(mux1, LOW);
+  seletorMux(enables[sabor], MUX_ENABLES);
+  digitalWrite(MUX_ENABLES, LOW);
 
   Serial.print("Dispensando sabor ");
   Serial.println(sabor);
@@ -663,13 +667,13 @@ void dispensarSabor(int sabor) {
     
   } 
 
-  digitalWrite(mux1, HIGH);   //desliga enable
+  digitalWrite(MUX_ENABLES, HIGH);   //desliga enable
   //serial.print (loopcount,DEC);
   Serial.println("Sabor dispensado");
   }
 
 void playBuzzer() {
-  seletorMux(BUZZER, mux1);
+  seletorMux(BUZZER, MUX_BUZZER);
   delay(1000);
   int tempo = 400;
   tone(10,440,tempo); //LA
@@ -708,7 +712,7 @@ void prepararPedido(pedido pedido) {
 
   ligarEsteira();
   delay(50);
-  while(readMux(IR0, mux2) == HIGH) {
+  while(readMux(IR0, MUX_IR0) == HIGH) {
   }
   desligarEsteira();
   
@@ -732,7 +736,7 @@ void prepararPedido(pedido pedido) {
   for(int i = 0; i < 5; i++) {
     ligarEsteira();
     if(pedido.sabores[i]) {
-      while(readMux(irs[i+1], mux2) == HIGH) {
+      while(readMux(irs[i+1], MUX_IRS) == HIGH) {
 
       }
         desligarEsteira();
@@ -742,7 +746,7 @@ void prepararPedido(pedido pedido) {
   }
   delay(1000);
   ligarEsteira();
-  while(readMux(IR6, mux2) == HIGH) {
+  while(readMux(IR6, MUX_IR6) == HIGH) {
   
   }
   desligarEsteira();
