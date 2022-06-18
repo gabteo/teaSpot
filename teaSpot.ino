@@ -105,7 +105,7 @@ const int mux2 = SIG_MUX2;
 
 //portas motores bipolares
 const int dir = 10;
-const int step = 11; 
+const int stp = 11; 
 
 
 //portas motor arquimedes demonstraão
@@ -117,7 +117,7 @@ bool isArquimedesEnabled = 0;*/
 
 //portas motor elevador
 bool isElevadorEnabled = 0;
-AccelStepper motorBipolar(1, step, dir);
+AccelStepper motorBipolar(1, stp, dir);
 bool elevadorDescendo = 1;
 //vide setup
 
@@ -184,10 +184,10 @@ void setupEsteira() {
   Serial.println("Setup esteira: ok");
 }
 
-bool fimCursoElevador;
+//bool fimCursoElevador;
 void setupElevador(int velocidadeElevador = 800, int aceleracaoElevador = 500) {
   pinMode(dir, OUTPUT);
-  pinMode(step, OUTPUT);
+  pinMode(stp, OUTPUT);
   //sentidoHorarioElevador = 0;
   //AccelStepper motorBipolar la nos defines
   //int velocidadeElevador = 800; 
@@ -197,17 +197,15 @@ void setupElevador(int velocidadeElevador = 800, int aceleracaoElevador = 500) {
 
   seletorMux(ELEVADOR, MUX_ELEVADOR);
   pinMode(MUX_ELEVADOR, OUTPUT);
+  digitalWrite(MUX_ELEVADOR, HIGH);
 
-
-  while(!readMux(FIM_CURSO, MUX_FIM_CURSO)) {
-
-  }
+  //while(!readMux(FIM_CURSO, MUX_FIM_CURSO)) {  }
 
   motorBipolar.setMaxSpeed(velocidadeElevador);
   motorBipolar.setSpeed(velocidadeElevador);
   motorBipolar.setAcceleration(aceleracaoElevador);
 
-  digitalWrite(MUX_ELEVADOR, HIGH);
+  
   //fimCursoElevador = digitalRead(mux2);
   //Serial.print("Fim de curso do elevador: ");
   //Serial.println(fimCursoElevador);
@@ -233,7 +231,7 @@ void setupUnipolar(int stepsPerRevolution = 200, int velocidade = 60) {
 void setupBipolar(int velocidade = 100, int aceleracao = 100, bool sentidoHorario = 0) {
 
   pinMode(dir, OUTPUT);
-  pinMode(step, OUTPUT);
+  pinMode(stp, OUTPUT);
 
   motorBipolar.setMaxSpeed(velocidade);
   motorBipolar.setSpeed(velocidade);
@@ -365,12 +363,9 @@ int seletorMux(int channel, int muxSel){ //muxSel aceita variaveis mux1 ou mux2
 }
 
 int readMux(int channel, int muxSel/*, bool pullup = false*/){ //muxSel aceita variaveis mux1 ou mux2
-  bool pullup = 0;
-  if(pullup) {
-    pinMode(muxSel, INPUT_PULLUP);
-  } else {
-    pinMode(muxSel, INPUT);
-  }  
+  
+  pinMode(muxSel, INPUT);
+ 
   
   seletorMux(channel, muxSel);
 
@@ -455,9 +450,38 @@ void descerElevador() {
   Serial.println("Descendo elevador...");
   //elevadorDescendo = 1;  
   //isElevadorEnabled = 1;
-  while(/*elevadorDescendo && isElevadorEnabled && */!digitalRead(MUX_FIM_CURSO)) {
+  seletorMux(FIM_CURSO, MUX_FIM_CURSO);
+  int i=0;
+  int j = 0;
+  int flag=0;
+  Serial.print("Valor fim_curso: ");
+  Serial.println(digitalRead(MUX_FIM_CURSO));
+  delay(50);
+  bool fimCurso = 0;
+  while(!flag) {
+    if(digitalRead(MUX_FIM_CURSO) == 1) {
+      flag = 1;
+      for(j=0;j<350;j++)
+      {
+        if(!digitalRead(MUX_FIM_CURSO))
+          flag = 0;
+      }
+      //Serial.print("Valor fim_curso");
+      //Serial.print(i);
+      //Serial.println(digitalRead(MUX_FIM_CURSO));
+    }
+
+    if(!(i%1000))
+      Serial.println(i);
     motorBipolar.moveTo(-10000);
+    motorBipolar.run();
+    i++;
+    //fimCurso = digitalRead(MUX_FIM_CURSO);
   }
+  Serial.print("Valor2 fim_curso: ");
+  Serial.println(digitalRead(MUX_FIM_CURSO));
+  Serial.print(i);
+  Serial.println(" passos");
   pararElevador();
 
   /*if(!fimCursoElevador) {
@@ -478,6 +502,7 @@ void subirElevador() {
   int i = 0;
   while(true) { // TODO WHILE NINGUEM GRITOU
     motorBipolar.moveTo(10000);
+    i++;
     if (!i%1000) {
       Serial.print(i);
       Serial.println(" passos");
@@ -716,9 +741,9 @@ void desativarMUX(int muxSel) {
 
 void prepararPedido(pedido pedido) {
   // Estação: dispenser de copos
-  dispensarCopo();
+  //dispensarCopo();
   
-  delay(3000);
+  //delay(3000);
 
   ligarEsteira();
   delay(50);
@@ -729,7 +754,7 @@ void prepararPedido(pedido pedido) {
   if(readMux(IR0, MUX_IR0)== LOW) {
     Serial.println("Copo detectado no aquecimento");
   }
-  delay(5000); //delay de debug
+  //delay(5000); //delay de debug
   //-------estação: água e aquecimento------
   delay(1000);
   descerElevador();
