@@ -15,8 +15,8 @@
 #define EN_S1 1
 #define EN_S5 2
 #define EN_S2 3
-#define EN_S3 4
-#define EN_S4 5
+#define EN_S3 5
+#define EN_S4 4
 #define ELEVADOR 6
 #define COPO_L 7
 #define ESTEIRA 8
@@ -203,7 +203,7 @@ void setupElevador(int velocidadeElevador = 800, int aceleracaoElevador = 500) {
 
   motorBipolar.setMaxSpeed(velocidadeElevador);
   motorBipolar.setSpeed(velocidadeElevador);
-  motorBipolar.setAcceleration(aceleracaoElevador);
+  motorBipolar.setAcceleration(1000);
 
   
   //fimCursoElevador = digitalRead(mux2);
@@ -443,6 +443,58 @@ void pararElevador() {
   digitalWrite(MUX_ELEVADOR, HIGH);  
   Serial.println("Elevador parado");
 }
+
+int numero = 3;
+int sentido_horario =0, sentido_antihorario = 1;
+void testePasso() {
+  // Aguarda os caracteres no serial monitor
+  
+  if (Serial.available() > 0) 
+  {
+    numero = Serial.read();
+    {
+      if (numero == '1')
+      {
+        Serial.println("Numero 1 recebido - Girando motor sentido horario.");
+        digitalWrite(MUX_ELEVADOR, LOW);
+        sentido_horario = 1;
+        sentido_antihorario = 0;
+      } 
+      
+      if (numero == '2')
+      {
+        Serial.println("Numero 2 recebido - Girando motor sentido anti-horario.");
+        digitalWrite(MUX_ELEVADOR, LOW);
+        sentido_horario = 0;
+        sentido_antihorario = 1;
+      }
+     
+      if (numero == '3')
+      {
+        Serial.println("Numero 3 recebido - Parando motor...");
+        sentido_horario = 0;
+        sentido_antihorario = 0;
+        motorBipolar.moveTo(0);
+        digitalWrite(MUX_ELEVADOR, HIGH);
+      } 
+    }
+  }
+  
+  // Move o motor no sentido horario
+  if (sentido_horario == 1)
+  {
+    motorBipolar.moveTo(10000);
+  }
+  // Move o motor no sentido anti-horario
+  if (sentido_antihorario == 1)
+  {
+    motorBipolar.moveTo(-10000);
+  }
+  // Comando para acionar o motor no sentido especificado
+  motorBipolar.run();
+}
+
+
 void descerElevador() {
   setupElevador();
   //descer elevador: sentido horário
@@ -451,7 +503,7 @@ void descerElevador() {
   //elevadorDescendo = 1;  
   //isElevadorEnabled = 1;
   seletorMux(FIM_CURSO, MUX_FIM_CURSO);
-  int i=0;
+  unsigned long i=0;
   int j = 0;
   int flag=0;
   Serial.print("Valor fim_curso: ");
@@ -499,11 +551,12 @@ void subirElevador() {
   //isElevadorEnabled = 1;
   digitalWrite(MUX_ELEVADOR, LOW);
   Serial.println("Subindo elevador...");
-  int i = 0;
-  while(true) { // TODO WHILE NINGUEM GRITOU
+  unsigned long i = 0;
+  while(i < 160000UL) { // TODO WHILE NINGUEM GRITOU
     motorBipolar.moveTo(10000);
+    motorBipolar.run();
     i++;
-    if (!i%1000) {
+    if (!(i%1000)) {
       Serial.print(i);
       Serial.println(" passos");
     }
@@ -611,7 +664,7 @@ void encherCopo() {
 
 void aquecer() {
   ligarEbulidor();
-  delay(20000);
+  delay(10000);
 
   //if temperatura
   desligarEbulidor();
@@ -636,13 +689,13 @@ void dispensarSabor(int sabor) {
       case 3: {
         setupBipolar(100, 100);
         tempo = 2500;
-        sentidoHorario = 0;
+        sentidoHorario = 1;
         break;
       }
-       case 4: {
+       case 4: { //Sabor 3
         setupBipolar(100, 100);
         tempo = 2500;
-        sentidoHorario = 0;
+        sentidoHorario = 1;
         break;
       }
     }
@@ -756,19 +809,19 @@ void prepararPedido(pedido pedido) {
   }
   //delay(5000); //delay de debug
   //-------estação: água e aquecimento------
-  delay(1000);
-  descerElevador();
-  delay(2000);
+  //delay(1000);
+  //descerElevador();
+  //delay(2000);
 
-  encherCopo();
+  /*encherCopo();
   delay(2000);
 
   if(pedido.aquecer)
     aquecer();
   delay(2000);
-
-  subirElevador();
-  delay(2000);
+  */
+  //subirElevador();
+  //delay(2000);
 
   //------------------estação: SABORES----------
   int irs[] = {IR0, IR1, IR2, IR3, IR4, IR5, IR6};
@@ -785,7 +838,7 @@ void prepararPedido(pedido pedido) {
           Serial.print("Copo detectado no IR ");
           Serial.println(i+1);
         }
-        //dispensarSabor(i+i);  //i+1 sim: confia!
+        dispensarSabor(i+i);  //i+1 sim: confia!
         delay(1000);
     }
   }
@@ -955,9 +1008,12 @@ int pedidosNaFila = 0;
 */
 void setup() {
   Serial.begin(9600);
-  setupMUX();
-  //FAZER: processo de inicialização e modo de abastecimento
   
+  setupMUX();
+  desativarMUX(mux1);
+  desativarMUX(mux2);
+  //FAZER: processo de inicialização e modo de abastecimento
+  //setupElevador();
 /*
   setupEsteira();
   setupCupDispenser();
@@ -968,16 +1024,18 @@ void setup() {
   setupEbulidor();
 
  */
+ 
+  //seletorMux(ELEVADOR, MUX_ELEVADOR);
+  //digitalWrite(MUX_ELEVADOR, HIGH);
 }
 
 void loop() {
-  desativarMUX(mux1);
-  desativarMUX(mux2);
+  
   pedido pedidoTeste;
   pedidoTeste.aquecer = 1;
   for (int i = 0; i < 5; i++)  
-    pedidoTeste.sabores[i] = 1;
-  
+    pedidoTeste.sabores[i] = 0;
+  pedidoTeste.sabores[2] = true;
   //modoTeste();
   
   prepararPedido(pedidoTeste);
@@ -994,5 +1052,6 @@ void loop() {
   Serial.println("aaa");
   while(true) {}
 */
+  //testePasso();
   exit(0);
 }
