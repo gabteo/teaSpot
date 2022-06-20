@@ -13,11 +13,11 @@
 //MUX1
 #define BUZZER 0
 #define EN_S1 1
-#define EN_S5 2
+#define EN_S5 2       //P VER A VER
 #define EN_S2 3
-#define EN_S3 5
-#define EN_S4 4
-#define ELEVADOR 6
+#define EN_S3 5       //VER P VER A
+#define EN_S4 4       //VER P VER A
+#define ELEVADOR 6    //P VER VERD A
 #define COPO_L 7
 #define ESTEIRA 8
 
@@ -220,11 +220,23 @@ void setupBomba() {
 }
 
 int stepsPerRevolution = 200;
-Stepper motorUnipolar(stepsPerRevolution, A5, A4, A3,A2);
+//Stepper motorUnipolar(stepsPerRevolution, A5, A4, A3, A2);
+Stepper motorUnipolar(stepsPerRevolution, A2, A3, A4, A5);
+  //Stepper motorUnipolar(stepsPerRevolution, 8, 9, 10, 11);
+  //Stepper motorUnipolar(stepsPerRevolution, in4, in3 in2, in1);
+  //Stepper motorUnipolar(stepsPerRevolution, A2, A3, A4, A5);
+
+/*a5 a4 a3 a2 
+in1 in2 in3 in4
+8 9 10 11
+in4 in3 in2 in1*/
 void setupUnipolar(int stepsPerRevolution = 200, int velocidade = 60) {
   // initialize the stepper library on pins 8 through 11:
   //Stepper motorUnipolar(stepsPerRevolution, 8, 9, 10, 11);
-  
+  /*pinMode(A2, OUTPUT);
+  pinMode(A3, OUTPUT);
+  pinMode(A4, OUTPUT);
+  pinMode(A5, OUTPUT);*/
   motorUnipolar.setSpeed(velocidade);
 }
 
@@ -692,7 +704,7 @@ void dispensarSabor(int sabor) {
         sentidoHorario = 1;
         break;
       }
-       case 4: { //Sabor 3
+       case 4: { 
         setupBipolar(100, 100);
         tempo = 2500;
         sentidoHorario = 1;
@@ -703,7 +715,7 @@ void dispensarSabor(int sabor) {
     int starttime, endtime, loopcount;
     starttime = millis();
     endtime = starttime;
-    while ((endtime - starttime) <=tempo) // do this loop for up to tempo
+    while ((endtime - starttime) <= tempo) // do this loop for up to tempo
     {
       // code here
         if (sentidoHorario) {
@@ -723,31 +735,48 @@ void dispensarSabor(int sabor) {
     switch(sabor) {
       case 1: {
         sentidoHorario = 0;
-        setupUnipolar(2000);
+        setupUnipolar(200);
         passos = 2000;
         break;
       }
        case 2: {
         sentidoHorario = 0;
-        setupUnipolar(2000);
+        setupUnipolar(200);
         passos = 2000;
         break;
       }
        case 5: {
         sentidoHorario = 0;
-        setupUnipolar(2000);
-        passos = 2000;
+        setupUnipolar(2, 60);
+        passos = 50;
         break;
       }
-
     }
 
     if(!sentidoHorario)
           passos *= -1;
 
     int stepCount = 0; // number of steps the motor has taken
-       
-    motorUnipolar.step(passos);
+
+    //motorUnipolar.setSpeed(100);
+    //for(int f = 0; f<3; f++) {
+    while(true) {
+      //motorUnipolar.step(passos);
+      //motorUnipolar.step(1);
+      //Serial.print("steps:");
+      //Serial.println(stepCount);
+      //stepCount++;
+      //delay(500);
+
+      motorUnipolar.step(passos);
+      delay(500);
+    
+      // step one revolution in the other direction:
+      Serial.println("counterclockwise");
+      motorUnipolar.step(-passos);
+      delay(500);
+    }
+    
     //stepCount++;
     //delay(500);
     //while(stepCount < passos) {   }
@@ -798,15 +827,15 @@ void prepararPedido(pedido pedido) {
   
   //delay(3000);
 
-  ligarEsteira();
+  /*ligarEsteira();
   delay(50);
   while(readMux(IR0, MUX_IR0) == HIGH) {
   }
   //desligarEsteira();
   desativarMUX(MUX_ESTEIRA);
   if(readMux(IR0, MUX_IR0)== LOW) {
-    Serial.println("Copo detectado no aquecimento");
-  }
+    Serial.println("Copo detectado no aquecimento");*/
+  //}
   //delay(5000); //delay de debug
   //-------estação: água e aquecimento------
   //delay(1000);
@@ -830,16 +859,12 @@ void prepararPedido(pedido pedido) {
     ligarEsteira();
     if(pedido.sabores[i]) {
       while(readMux(irs[i+1], MUX_IRS) == HIGH) {
-
       }
-        desativarMUX(MUX_ESTEIRA);
-        //desligarEsteira();
-        if(readMux(IR0, MUX_IR0)== LOW) {
-          Serial.print("Copo detectado no IR ");
-          Serial.println(i+1);
-        }
-        dispensarSabor(i+i);  //i+1 sim: confia!
-        delay(1000);
+      desativarMUX(MUX_ESTEIRA);
+      //desligarEsteira();
+      
+      dispensarSabor(i+1);  //i+1 sim: confia!
+      delay(1000);
     }
   }
 
@@ -1035,7 +1060,9 @@ void loop() {
   pedidoTeste.aquecer = 1;
   for (int i = 0; i < 5; i++)  
     pedidoTeste.sabores[i] = 0;
-  pedidoTeste.sabores[2] = true;
+  //pedidoTeste.sabores[2] = true;
+  pedidoTeste.sabores[4] = true;
+  
   //modoTeste();
   
   prepararPedido(pedidoTeste);
@@ -1053,5 +1080,5 @@ void loop() {
   while(true) {}
 */
   //testePasso();
-  exit(0);
+  //exit(0);
 }
