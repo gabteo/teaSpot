@@ -597,7 +597,7 @@ void ligarEbulidor() {
   Serial.println("Ebulidor ligado");
 }
 void desligarEbulidor() {
-  //setupEbulidor();
+  setupEbulidor();
   digitalWrite(MUX_EBULIDOR, HIGH);
   Serial.println("Ebulidor desligado");
 }
@@ -661,6 +661,7 @@ void mexer(int tempo = 60000) {
 
   delay(500);
   levantarMexedor();
+  desativarMUX(MUX_SERVO_MIX);
 }
 
 void encherCopo() {
@@ -813,6 +814,7 @@ void playBuzzer() {
   delay(tempo/2);
   tone(10,330,tempo); //MI
   delay(tempo);
+  desativarMUX(MUX_BUZZER);
 }
 
 void desativarMUX(int muxSel) {
