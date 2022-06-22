@@ -535,17 +535,17 @@ void descerElevador() {
       //Serial.println(digitalRead(MUX_FIM_CURSO));
     }
 
-    if(!(i%1000))
-      Serial.println(i);
+    /*if(!(i%1000))
+      Serial.println(i);*/
     motorBipolar.moveTo(-10000);
     motorBipolar.run();
     i++;
     //fimCurso = digitalRead(MUX_FIM_CURSO);
   }
-  Serial.print("Valor2 fim_curso: ");
+  /*Serial.print("Valor2 fim_curso: ");
   Serial.println(digitalRead(MUX_FIM_CURSO));
   Serial.print(i);
-  Serial.println(" passos");
+  Serial.println(" passos");*/
   pararElevador();
 
   /*if(!fimCursoElevador) {
@@ -568,10 +568,10 @@ void subirElevador() {
     motorBipolar.moveTo(10000);
     motorBipolar.run();
     i++;
-    if (!(i%1000)) {
+    /*if (!(i%1000)) {
       Serial.print(i);
       Serial.println(" passos");
-    }
+    }*/
   }
   pararElevador();
   //subir elevador
@@ -597,7 +597,7 @@ void ligarEbulidor() {
   Serial.println("Ebulidor ligado");
 }
 void desligarEbulidor() {
-  setupEbulidor();
+  //setupEbulidor();
   digitalWrite(MUX_EBULIDOR, HIGH);
   Serial.println("Ebulidor desligado");
 }
@@ -674,9 +674,9 @@ void encherCopo() {
   }
 
 
-void aquecer() {
+void aquecer(int tempo = 5000) {
   ligarEbulidor();
-  delay(10000);
+  delay(tempo);
 
   //if temperatura
   desligarEbulidor();
@@ -736,13 +736,13 @@ void dispensarSabor(int sabor) {
       case 1: {
         sentidoHorario = 0;
         setupUnipolar(200);
-        passos = 2000;
+        passos = 1000;
         break;
       }
        case 2: {
         sentidoHorario = 0;
         setupUnipolar(200);
-        passos = 2000;
+        passos = 1000;
         break;
       }
        case 5: {
@@ -760,7 +760,9 @@ void dispensarSabor(int sabor) {
 
     //motorUnipolar.setSpeed(100);
     //for(int f = 0; f<3; f++) {
-    while(true) {
+    motorUnipolar.step(passos);
+    delay(500);
+    /*while(true) {
       //motorUnipolar.step(passos);
       //motorUnipolar.step(1);
       //Serial.print("steps:");
@@ -772,10 +774,10 @@ void dispensarSabor(int sabor) {
       delay(500);
     
       // step one revolution in the other direction:
-      Serial.println("counterclockwise");
-      motorUnipolar.step(-passos);
-      delay(500);
-    }
+      //Serial.println("counterclockwise");
+      //motorUnipolar.step(-passos);
+      //delay(500);
+    }*/
     
     //stepCount++;
     //delay(500);
@@ -823,33 +825,34 @@ void desativarMUX(int muxSel) {
 
 void prepararPedido(pedido pedido) {
   // Estação: dispenser de copos
-  //dispensarCopo();
+  delay(5000);
+  dispensarCopo();
   
-  //delay(3000);
+  delay(3000);
 
-  /*ligarEsteira();
+  ligarEsteira();
   delay(50);
   while(readMux(IR0, MUX_IR0) == HIGH) {
   }
   //desligarEsteira();
   desativarMUX(MUX_ESTEIRA);
   if(readMux(IR0, MUX_IR0)== LOW) {
-    Serial.println("Copo detectado no aquecimento");*/
-  //}
+    Serial.println("Copo detectado no aquecimento");
+  }
   //delay(5000); //delay de debug
   //-------estação: água e aquecimento------
-  //delay(1000);
-  //descerElevador();
-  //delay(2000);
+  delay(1000);
+  descerElevador();
+  delay(2000);
 
-  /*encherCopo();
+  encherCopo();
   delay(2000);
 
   if(pedido.aquecer)
-    aquecer();
+    aquecer(5000);
   delay(2000);
-  */
-  //subirElevador();
+  
+  subirElevador();
   //delay(2000);
 
   //------------------estação: SABORES----------
@@ -879,7 +882,7 @@ void prepararPedido(pedido pedido) {
     Serial.println("Copo detectado no mexedor");
   }
   delay(1000);
-  //mexer();
+  mexer(5000);
 
   delay(2000);
 
@@ -1045,6 +1048,7 @@ void setup() {
   setupElevador();
   setupSabores();
   setupMexedor();
+  
   setupBomba();
   setupEbulidor();
 
@@ -1059,9 +1063,9 @@ void loop() {
   pedido pedidoTeste;
   pedidoTeste.aquecer = 1;
   for (int i = 0; i < 5; i++)  
-    pedidoTeste.sabores[i] = 0;
+    pedidoTeste.sabores[i] = true;
   //pedidoTeste.sabores[2] = true;
-  pedidoTeste.sabores[4] = true;
+  //pedidoTeste.sabores[4] = true;
   
   //modoTeste();
   
