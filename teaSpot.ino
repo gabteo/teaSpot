@@ -794,6 +794,7 @@ void dispensarSabor(int sabor) {
 
 void playBuzzer() {
   seletorMux(BUZZER, MUX_BUZZER);
+  pinMode(MUX_BUZZER, OUTPUT);
   delay(1000);
   int tempo = 400;
   tone(10,440,tempo); //LA
@@ -897,6 +898,8 @@ void prepararPedido(pedido pedido) {
 
   playBuzzer();
   
+  desativarMUX(mux1);
+  desativarMUX(mux2);
   }
   
 //----------------ate aqui tudo ok-----------------------
@@ -1086,5 +1089,6 @@ void loop() {
   while(true) {}
 */
   //testePasso();
+  
   //exit(0);
 }
