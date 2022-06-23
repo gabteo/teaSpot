@@ -175,8 +175,8 @@ void setupCupDispenser() {
 
   seletorMux(COPO_L, MUX_COPO_L);
   seletorMux(COPO_R, MUX_COPO_R);
-
-  esticarDispenser();
+  delay(10);
+  //esticarDispenser();
   Serial.println("Setup cup dipenser: ok");
   return;
 }
@@ -261,9 +261,9 @@ void setupBipolar(int velocidade = 100, int aceleracao = 100, bool sentidoHorari
 
 
 void levantarMexedor();
-
+Servo servoMexedor;
 void setupMexedor() {
-  Servo servoMexedor;
+  
   desativarMUX(MUX_SERVO_MIX);
   pinMode(MUX_SERVO_MIX, OUTPUT);
   //digitalWrite(MEXEDOR, HIGH);
@@ -353,7 +353,7 @@ int seletorMux(int channel, int muxSel){ //muxSel aceita variaveis mux1 ou mux2
   };
 
   //loop through the 4 sig
-  desativarMUX(muxSel)
+  desativarMUX(muxSel);
   if(muxSel==mux1) {
     for(int i = 0; i < 4; i ++){
       digitalWrite(controlPin[0][i], muxChannel[channel][i]);
@@ -393,13 +393,13 @@ int readMux(int channel, int muxSel/*, bool pullup = false*/){ //muxSel aceita v
   int val = digitalRead(muxSel);
 
   //disable mux
-  if(muxSel==mux1) {
+  /*if(muxSel==mux1) {
     digitalWrite(EN_MUX1, HIGH);
     Serial.println("MUX 1 desabilitado");
   } else if(muxSel==mux2) {
     digitalWrite(EN_MUX2, HIGH);
     Serial.println("MUX 2 desabilitado");
-  }
+  }*/
 
 
   return val;
@@ -431,9 +431,10 @@ void encolherDispenser() {
 
 void dispensarCopo() {
   setupCupDispenser();
-  
+  delay(30);
   encolherDispenser();
   delay(2000);
+  delay(30);
   esticarDispenser();
   Serial.println("Copo dispensado");
   return;
@@ -514,7 +515,7 @@ void testePasso() {
 void descerElevador() {
   setupElevador();
   //descer elevador: sentido horário
-  digitalWrite(MUX_ELEVADOR, LOW);
+  
   Serial.println("Descendo elevador...");
   //elevadorDescendo = 1;  
   //isElevadorEnabled = 1;
@@ -526,6 +527,7 @@ void descerElevador() {
   Serial.println(digitalRead(MUX_FIM_CURSO));
   delay(50);
   bool fimCurso = 0;
+  digitalWrite(MUX_ELEVADOR, LOW);
   while(!flag) {
     if(digitalRead(MUX_FIM_CURSO) == 1) {
       flag = 1;
@@ -568,7 +570,7 @@ void subirElevador() {
   digitalWrite(MUX_ELEVADOR, LOW);
   Serial.println("Subindo elevador...");
   unsigned long i = 0;
-  while(i < 1600000UL) { // TODO WHILE NINGUEM GRITOU
+  while(i < 160000UL*5UL) { // TODO WHILE NINGUEM GRITOU
     motorBipolar.moveTo(10000);
     motorBipolar.run();
     i++;
@@ -589,7 +591,7 @@ void ligarBomba() {
   Serial.println("Bomba ligada");
   }
 void desligarBomba() {
-  setupBomba();
+  //setupBomba();
   digitalWrite(MUX_BOMBA, HIGH);
   //digitalWrite(BOMBA, HIGH);
   Serial.println("Bomba desligada");
@@ -609,7 +611,7 @@ void desligarEbulidor() {
 
 void levantarMexedor() {
   Serial.println("Levantando mexedor...");
-  Servo servoMexedor;
+  //Servo servoMexedor;
   desativarMUX(MUX_SERVO_MIX);
   pinMode(MUX_SERVO_MIX, OUTPUT);
   servoMexedor.attach(MUX_SERVO_MIX);
@@ -706,13 +708,13 @@ void dispensarSabor(int sabor) {
     switch(sabor) {
       case 3: {
         setupBipolar(100, 100);
-        tempo = 2500;
+        tempo = 800;
         sentidoHorario = 1;
         break;
       }
        case 4: { 
         setupBipolar(100, 100);
-        tempo = 2500;
+        tempo = 800;
         sentidoHorario = 1;
         break;
       }
@@ -743,20 +745,20 @@ void dispensarSabor(int sabor) {
     switch(sabor) {
       case 1: {
         sentidoHorario = 0;
-        setupUnipolar(200);
-        passos = 1000;
+        setupUnipolar(50);
+        passos = 500000;//50
         break;
       }
        case 2: {
-        sentidoHorario = 0;
-        setupUnipolar(200);
-        passos = 1000;
+        sentidoHorario = 1;
+        setupUnipolar(50);
+        passos = 50;
         break;
       }
        case 5: {
         sentidoHorario = 0;
         setupUnipolar(2, 60);
-        passos = 50;
+        passos = 75;
         break;
       }
     }
@@ -807,23 +809,23 @@ void playBuzzer() {
   pinMode(MUX_BUZZER, OUTPUT);
   seletorMux(BUZZER, MUX_BUZZER);
   
-  tone(10,440,tempo); //LA
+  tone(MUX_BUZZER,440,tempo); //LA
   delay(tempo);
-  tone(10,294,tempo); //RE
+  tone(MUX_BUZZER,294,tempo); //RE
   delay(tempo);
-  tone(10,349,tempo/2); //FA - O tempo/2 faz com que demore metade do valor estipulado anteriormente, pois essa parte é mais rápida
+  tone(MUX_BUZZER,349,tempo/2); //FA - O tempo/2 faz com que demore metade do valor estipulado anteriormente, pois essa parte é mais rápida
   delay(tempo/2);
-  tone(10,392,tempo/2); //SOL
+  tone(MUX_BUZZER,392,tempo/2); //SOL
   delay(tempo/2);
-  tone(10,440,tempo); //LA
+  tone(MUX_BUZZER,440,tempo); //LA
   delay(tempo);
-  tone(10,294,tempo); //RE
+  tone(MUX_BUZZER,294,tempo); //RE
   delay(tempo);
-  tone(10,349,tempo/2); //FA
+  tone(MUX_BUZZER,349,tempo/2); //FA
   delay(tempo/2);
-  tone(10,392,tempo/2); //SOL
+  tone(MUX_BUZZER,392,tempo/2); //SOL
   delay(tempo/2);
-  tone(10,330,tempo); //MI
+  tone(MUX_BUZZER,330,tempo); //MI
   delay(tempo);
   desativarMUX(MUX_BUZZER);
 }
@@ -838,7 +840,7 @@ void desativarMUX(int muxSel) {
 
 void prepararPedido(pedido pedido) {
   // Estação: dispenser de copos
-  delay(5000);
+  /*delay(5000);
   dispensarCopo();
   
   delay(3000);
@@ -861,18 +863,20 @@ void prepararPedido(pedido pedido) {
   encherCopo();
   delay(2000);
 
-  if(pedido.aquecer)
-    aquecer(5000);
-  delay(2000);
+  //if(pedido.aquecer)
+    //aquecer(5000);
+  //delay(2000);
   
   subirElevador();
   //delay(2000);
 
+*/
   //------------------estação: SABORES----------
   int irs[] = {IR0, IR1, IR2, IR3, IR4, IR5, IR6};
 
   for(int i = 0; i < 5; i++) {
     ligarEsteira();
+    delay(20);
     if(pedido.sabores[i]) {
       while(readMux(irs[i+1], MUX_IRS) == HIGH) {
       }
@@ -883,7 +887,7 @@ void prepararPedido(pedido pedido) {
       delay(1000);
     }
   }
-
+ /*
   //----------ESTAÇÃO MEXEDOR-------------//
   delay(1000);
   ligarEsteira();
@@ -907,7 +911,7 @@ void prepararPedido(pedido pedido) {
   //desligarEsteira();
 
   playBuzzer();
-  
+ */ 
   desativarMUX(mux1);
   desativarMUX(mux2);
   }
@@ -1053,14 +1057,14 @@ void setup() {
   Serial.begin(9600);
   
   setupMUX();
-  setupMexedor();
-  levantarMexedor();
-  desativarMUX(MUX_SERVO_MIX);
+  //setupMexedor();
+  //levantarMexedor();
+  //desativarMUX(MUX_SERVO_MIX);
   
-  setupElevador();
-  descerElevador();
-  subirElevador();
-  desativarMUX(MUX_ELEVADOR);
+  //setupElevador();
+  //descerElevador();
+  //subirElevador();
+  //desativarMUX(MUX_ELEVADOR);
   
   //FAZER: processo de inicialização e modo de abastecimento
   //setupElevador();
@@ -1085,14 +1089,14 @@ void loop() {
   pedido pedidoTeste;
   pedidoTeste.aquecer = 1;
   for (int i = 0; i < 5; i++)  
-    pedidoTeste.sabores[i] = true;
-  //pedidoTeste.sabores[2] = true;
+    pedidoTeste.sabores[i] = false;
+  pedidoTeste.sabores[0] = true;
   //pedidoTeste.sabores[4] = true;
   
   //modoTeste();
   
   prepararPedido(pedidoTeste);
-  delay(15000);
+  delay(500);
 /*
   seletorMux(8, mux1); //confunde com 2
   pinMode(mux1, OUTPUT);
