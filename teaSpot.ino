@@ -662,7 +662,7 @@ void desligarMexedor() {
 void mexer(int tempo = 60000) {
   Serial.println("Mexendo bebida...");
   abaixarMexedor();
-  delay(500);
+  delay(1000);
 
   ligarMexedor();
   delay(tempo);
@@ -673,12 +673,14 @@ void mexer(int tempo = 60000) {
   desativarMUX(MUX_SERVO_MIX);
 }
 
-void encherCopo() {
-  ligarBomba();
+void encherCopo(int tempo = 5000) {
   Serial.println("Enchendo copo...");
-  delay(5000);
+  ligarBomba();
+  delay(tempo);
   //if nivel de agua
-  desligarBomba();
+  digitalWrite(MUX_BOMBA, HIGH);
+  seletorMux(16,MUX_BOMBA);
+  //desligarBomba();
   Serial.println("Copo cheio");
   return;
   }
@@ -746,7 +748,7 @@ void dispensarSabor(int sabor) {
       case 1: {
         sentidoHorario = 0;
         setupUnipolar(50);
-        passos = 500000;//50
+        passos = 50;
         break;
       }
        case 2: {
@@ -840,7 +842,7 @@ void desativarMUX(int muxSel) {
 
 void prepararPedido(pedido pedido) {
   // Estação: dispenser de copos
-  /*delay(5000);
+  delay(5000);
   dispensarCopo();
   
   delay(3000);
@@ -860,17 +862,17 @@ void prepararPedido(pedido pedido) {
   descerElevador();
   delay(2000);
 
-  encherCopo();
-  delay(2000);
+  encherCopo(5000);
+  delay(3000);
 
-  //if(pedido.aquecer)
-    //aquecer(5000);
-  //delay(2000);
+  if(pedido.aquecer)
+    aquecer(20000);
+  delay(2000);
   
   subirElevador();
   //delay(2000);
 
-*/
+
   //------------------estação: SABORES----------
   int irs[] = {IR0, IR1, IR2, IR3, IR4, IR5, IR6};
 
@@ -887,9 +889,11 @@ void prepararPedido(pedido pedido) {
       delay(1000);
     }
   }
- /*
+ 
   //----------ESTAÇÃO MEXEDOR-------------//
   delay(1000);
+  levantarMexedor();
+  delay(3000);
   ligarEsteira();
   while(readMux(IR6, MUX_IR6) == HIGH) {
   }
@@ -899,7 +903,7 @@ void prepararPedido(pedido pedido) {
     Serial.println("Copo detectado no mexedor");
   }
   delay(1000);
-  mexer(5000);
+  mexer(15000);
 
   delay(2000);
 
@@ -911,7 +915,7 @@ void prepararPedido(pedido pedido) {
   //desligarEsteira();
 
   playBuzzer();
- */ 
+  
   desativarMUX(mux1);
   desativarMUX(mux2);
   }
@@ -1087,9 +1091,9 @@ void setup() {
 void loop() {
   
   pedido pedidoTeste;
-  pedidoTeste.aquecer = 1;
+  pedidoTeste.aquecer = true;
   for (int i = 0; i < 5; i++)  
-    pedidoTeste.sabores[i] = false;
+    pedidoTeste.sabores[i] = true;
   pedidoTeste.sabores[0] = true;
   //pedidoTeste.sabores[4] = true;
   
@@ -1112,5 +1116,5 @@ void loop() {
 */
   //testePasso();
   
-  //exit(0);
+  exit(0);
 }
