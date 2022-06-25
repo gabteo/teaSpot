@@ -51,6 +51,7 @@
 #define IR4 8
 #define IR5 9
 #define IR6 10
+#define IR7 15
 #define MUX_IR0 mux2
 #define MUX_IR1 mux2
 #define MUX_IR2 mux2
@@ -58,6 +59,7 @@
 #define MUX_IR4 mux2
 #define MUX_IR5 mux2
 #define MUX_IR6 mux2
+#define MUX_IR7 mux2
 #define MUX_IRS mux2
 
 #define COPO_R 11
@@ -135,7 +137,8 @@ const int tempoElevador = 4500;
 
 struct pedido {
   bool aquecer;
-  bool sabores[5] = {0,1,2,3,4};
+  bool sabores[5] = {0,0,0,0,0}; //= {0,1,2,3,4};
+  byte idCliente;
 };
 /*const int maxLeft = 200;
 const int minLeft = 90;
@@ -907,14 +910,23 @@ void prepararPedido(pedido pedido) {
 
   delay(2000);
 
+  Serial.print("PRONTO");
 
   //-------------ESTAÇÃO ENTREGA------------
   ligarEsteira();
-  delay(1500);
+  int timer = millis();
+  int timerMax = timer+2000;
+  while(readMux(IR7, MUX_IR7) == HIGH && timer<timerMax) {
+    timer = millis();
+  }
   desativarMUX(MUX_ESTEIRA);
-  //desligarEsteira();
-
-  playBuzzer();
+  delay(1000);
+  while (!readMux(IR7, MUX_IR7))
+  {
+    playBuzzer();
+    delay(4000);
+  }
+    
   
   desativarMUX(mux1);
   desativarMUX(mux2);
@@ -922,7 +934,15 @@ void prepararPedido(pedido pedido) {
   
 //----------------ate aqui tudo ok-----------------------
 
-
+pedido getPedido() {
+  pedido pedido;
+  //verificar se a leitura serial é da esquerda pra direita
+  if(Serial.available()>0) {
+    byte sabores;
+    int idCliente;
+  }
+  return pedido;
+}
 
 /*
 void modoTeste() {
