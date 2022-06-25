@@ -982,16 +982,20 @@ void prepararPedido(pedido pedido) {
 //----------------ate aqui tudo ok-----------------------
 pedido pedidoAtual;
 bool pedidoPronto = false;
+bool temPedido = false;
 
 void getPedido() {
   //verificar se a leitura serial é da esquerda pra direita
   pedidoPronto = false;
   if(Serial.available()>0) {
+    temPedido = true;
     //PRIMEIRO RECEBE CLIENTE
     //DEPOIS RECEBE PEDIDO
-    Serial.readBytes(pedidoAtual.idCliente, 1);
-    byte escolha;
-    Serial.readBytes(escolha, 1);
+    char temp;
+    Serial.readBytes(&temp, 1);
+    pedidoAtual.idCliente = temp;
+    char escolha;
+    Serial.readBytes(&escolha, 1);
     pedidoAtual.aquecer = bitRead(escolha, 5);
     for(int i = 4; i>=0; i--) {
       pedidoAtual.sabores[4-i] = bitRead(escolha, i);
@@ -1004,6 +1008,7 @@ void setPedidoPronto() {
   pedidoPronto = true;
   if(debug) 
   Serial.print("PRONTO");
+  temPedido = false;
 }
 
 /*
@@ -1143,6 +1148,9 @@ void setup() {
   Serial.begin(9600);
   
   setupMUX();
+
+  delay(10000);
+  playBuzzer();
   //setupMexedor();
   //levantarMexedor();
   //desativarMUX(MUX_SERVO_MIX);
@@ -1181,7 +1189,7 @@ void loop() {
   
   //modoTeste();
   getPedido();
-  if(pedidoAtual) {
+  if(temPedido) {
     
     prepararPedido(pedidoAtual);
     delay(500);
@@ -1189,7 +1197,7 @@ void loop() {
   }
   
 
-  pedidoAtual = NULL;
+  //pedidoAtual = NULL;
 /*
   seletorMux(8, mux1); //confunde com 2
   pinMode(mux1, OUTPUT);
@@ -1205,5 +1213,5 @@ void loop() {
 */
   //testePasso();
   
-  exit(0);
+  //exit(0);
 }
