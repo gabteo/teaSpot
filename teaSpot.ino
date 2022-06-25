@@ -71,7 +71,7 @@
 //15 nao conectado
 
 
-
+const bool debug = false;
 
 //MUX NO ARDUINO------------------------
 #define SIG_MUX1 12 
@@ -180,6 +180,7 @@ void setupCupDispenser() {
   seletorMux(COPO_R, MUX_COPO_R);
   delay(10);
   //esticarDispenser();
+  if(debug) 
   Serial.println("Setup cup dipenser: ok");
   return;
 }
@@ -189,6 +190,7 @@ void setupEsteira() {
   pinMode(MUX_ESTEIRA, OUTPUT);
   digitalWrite(MUX_ESTEIRA, HIGH);
   seletorMux(ESTEIRA, MUX_ESTEIRA);
+  if(debug) 
   Serial.println("Setup esteira: ok");
 }
 
@@ -217,8 +219,10 @@ void setupElevador(int velocidadeElevador = 800, int aceleracaoElevador = 500) {
 
   
   //fimCursoElevador = digitalRead(mux2);
-  //Serial.print("Fim de curso do elevador: ");
+  //if(debug) 
+  Serial.print("Fim de curso do elevador: ");
   //Serial.println(fimCursoElevador);
+  if(debug) 
   Serial.println("Setup elevador: ok");
   }
 
@@ -227,6 +231,7 @@ void setupBomba() {
   pinMode(MUX_BOMBA, OUTPUT);
   digitalWrite(MUX_BOMBA, HIGH); 
   seletorMux(BOMBA, MUX_BOMBA);
+  if(debug) 
   Serial.println("Setup bomba: ok");
 }
 
@@ -280,6 +285,7 @@ void setupEbulidor() {
   pinMode(MUX_EBULIDOR, OUTPUT);
   digitalWrite(MUX_EBULIDOR, HIGH);
   seletorMux(EBULIDOR, MUX_EBULIDOR);
+  if(debug) 
   Serial.println("Setup ebulidor: ok");  
 }
 
@@ -299,6 +305,7 @@ void setupMUX() {
 
   digitalWrite(mux1, LOW); 
   
+  if(debug) 
   Serial.println("Setup MUX1: ok");
 
   //SETUP MUX2
@@ -369,19 +376,26 @@ int seletorMux(int channel, int muxSel){ //muxSel aceita variaveis mux1 ou mux2
 
   if(muxSel==mux1) {
     digitalWrite(EN_MUX1, LOW);
-    Serial.println("MUX 1 habilitado");
+    if(debug) 
+  Serial.println("MUX 1 habilitado");
   } else if(muxSel==mux2) {
     digitalWrite(EN_MUX2, LOW);
-    Serial.println("MUX 2 habilitado");
+    if(debug) 
+  Serial.println("MUX 2 habilitado");
   }
 
+  if(debug) 
   Serial.print("Selecionado o canal ");
+  if(debug) 
   Serial.print(channel);
+  if(debug) 
   Serial.print(" do mux ");
   if(muxSel == mux1) {
-    Serial.println("1.");
+    if(debug) 
+  Serial.println("1.");
   } else 
-    Serial.println("2.");
+    if(debug) 
+  Serial.println("2.");
   return muxSel;
 }
 
@@ -439,6 +453,7 @@ void dispensarCopo() {
   delay(2000);
   delay(30);
   esticarDispenser();
+  if(debug) 
   Serial.println("Copo dispensado");
   return;
 }
@@ -447,20 +462,24 @@ bool ligarEsteira() {
   setupEsteira();
   
   digitalWrite(MUX_ESTEIRA, LOW);  //logica negativa
+  if(debug) 
   Serial.println("Esteira ligada");
 }
 
 bool desligarEsteira() {
   setupEsteira();
   digitalWrite(MUX_ESTEIRA, HIGH);
+  if(debug) 
   Serial.println("Esteira desligada");
 }
 
 void pararElevador() {
   //isElevadorEnabled = 0;
+  if(debug) 
   Serial.println("Parando elevador...");
   motorBipolar.moveTo(0);
   digitalWrite(MUX_ELEVADOR, HIGH);  
+  if(debug) 
   Serial.println("Elevador parado");
 }
 
@@ -475,7 +494,8 @@ void testePasso() {
     {
       if (numero == '1')
       {
-        Serial.println("Numero 1 recebido - Girando motor sentido horario.");
+        if(debug) 
+  Serial.println("Numero 1 recebido - Girando motor sentido horario.");
         digitalWrite(MUX_ELEVADOR, LOW);
         sentido_horario = 1;
         sentido_antihorario = 0;
@@ -483,7 +503,8 @@ void testePasso() {
       
       if (numero == '2')
       {
-        Serial.println("Numero 2 recebido - Girando motor sentido anti-horario.");
+        if(debug) 
+  Serial.println("Numero 2 recebido - Girando motor sentido anti-horario.");
         digitalWrite(MUX_ELEVADOR, LOW);
         sentido_horario = 0;
         sentido_antihorario = 1;
@@ -491,7 +512,8 @@ void testePasso() {
      
       if (numero == '3')
       {
-        Serial.println("Numero 3 recebido - Parando motor...");
+        if(debug) 
+  Serial.println("Numero 3 recebido - Parando motor...");
         sentido_horario = 0;
         sentido_antihorario = 0;
         motorBipolar.moveTo(0);
@@ -519,6 +541,7 @@ void descerElevador() {
   setupElevador();
   //descer elevador: sentido horário
   
+  if(debug) 
   Serial.println("Descendo elevador...");
   //elevadorDescendo = 1;  
   //isElevadorEnabled = 1;
@@ -526,7 +549,9 @@ void descerElevador() {
   unsigned long i=0;
   int j = 0;
   int flag=0;
+  if(debug) 
   Serial.print("Valor fim_curso: ");
+  if(debug) 
   Serial.println(digitalRead(MUX_FIM_CURSO));
   delay(50);
   bool fimCurso = 0;
@@ -571,6 +596,7 @@ void subirElevador() {
   //elevadorDescendo = 0;  
   //isElevadorEnabled = 1;
   digitalWrite(MUX_ELEVADOR, LOW);
+  if(debug) 
   Serial.println("Subindo elevador...");
   unsigned long i = 0;
   while(i < 160000UL*5UL) { // TODO WHILE NINGUEM GRITOU
@@ -591,28 +617,33 @@ void subirElevador() {
 void ligarBomba() {
   setupBomba();
   digitalWrite(MUX_BOMBA, LOW);
+  if(debug) 
   Serial.println("Bomba ligada");
   }
 void desligarBomba() {
   //setupBomba();
   digitalWrite(MUX_BOMBA, HIGH);
   //digitalWrite(BOMBA, HIGH);
+  if(debug) 
   Serial.println("Bomba desligada");
 }
 
 void ligarEbulidor() {
   setupEbulidor();
   digitalWrite(MUX_EBULIDOR, LOW);
+  if(debug) 
   Serial.println("Ebulidor ligado");
 }
 void desligarEbulidor() {
   setupEbulidor();
   digitalWrite(MUX_EBULIDOR, HIGH);
+  if(debug) 
   Serial.println("Ebulidor desligado");
 }
 
 
 void levantarMexedor() {
+  if(debug) 
   Serial.println("Levantando mexedor...");
   //Servo servoMexedor;
   desativarMUX(MUX_SERVO_MIX);
@@ -626,13 +657,16 @@ void levantarMexedor() {
   for(int i = posServoMexedor; i < servoMexedorFinal; i += 1) {
     posServoMexedor = i;
     servoMexedor.write(posServoMexedor);
-    Serial.println(posServoMexedor);
+    if(debug) 
+  Serial.println(posServoMexedor);
     delay(5);    
   }
+  if(debug) 
   Serial.println("Mexedor levantado");
 }
 
 void abaixarMexedor() {
+  if(debug) 
   Serial.println("Abaixando mexedor...");
   setupMexedor();
   
@@ -640,9 +674,11 @@ void abaixarMexedor() {
   for(int i = posServoMexedor; i > servoMexedorInicial; i -= 1) {
     posServoMexedor = i;
     servoMexedor.write(posServoMexedor);
-    Serial.println(posServoMexedor);
+    if(debug) 
+  Serial.println(posServoMexedor);
     delay(5);
   }  
+  if(debug) 
   Serial.println("Mexedor abaixado");
 }
 
@@ -653,6 +689,7 @@ void ligarMexedor() {
   digitalWrite(MUX_MOTOR_MIX, LOW);
   seletorMux(MOTOR_MIX, MUX_MOTOR_MIX);
   
+  if(debug) 
   Serial.println("Mexedor ligado");
 }
 void desligarMexedor() {
@@ -660,9 +697,11 @@ void desligarMexedor() {
   //seletorMux(MOTOR_MIX, MUX_MOTOR_MIX);
   //pinMode(MUX_MOTOR_MIX, OUTPUT);
   //digitalWrite(MUX_MOTOR_MIX, HIGH); 
+  if(debug) 
   Serial.println("Mexedor desligado");
 }
 void mexer(int tempo = 60000) {
+  if(debug) 
   Serial.println("Mexendo bebida...");
   abaixarMexedor();
   delay(1000);
@@ -677,6 +716,7 @@ void mexer(int tempo = 60000) {
 }
 
 void encherCopo(int tempo = 5000) {
+  if(debug) 
   Serial.println("Enchendo copo...");
   ligarBomba();
   delay(tempo);
@@ -684,6 +724,7 @@ void encherCopo(int tempo = 5000) {
   digitalWrite(MUX_BOMBA, HIGH);
   seletorMux(16,MUX_BOMBA);
   //desligarBomba();
+  if(debug) 
   Serial.println("Copo cheio");
   return;
   }
@@ -705,7 +746,9 @@ void dispensarSabor(int sabor) {
   bool sentidoHorario = false;
   desativarMUX(MUX_ENABLES);
 
+  if(debug) 
   Serial.print("Dispensando sabor ");
+  if(debug) 
   Serial.println(sabor);
 
   if(sabor==3 || sabor==4) {
@@ -804,6 +847,7 @@ void dispensarSabor(int sabor) {
 
   digitalWrite(MUX_ENABLES, HIGH);   //desliga enable
   //serial.print (loopcount,DEC);
+  if(debug) 
   Serial.println("Sabor dispensado");
   }
 
@@ -857,7 +901,8 @@ void prepararPedido(pedido pedido) {
   //desligarEsteira();
   desativarMUX(MUX_ESTEIRA);
   if(readMux(IR0, MUX_IR0)== LOW) {
-    Serial.println("Copo detectado no aquecimento");
+    if(debug) 
+  Serial.println("Copo detectado no aquecimento");
   }
   //delay(5000); //delay de debug
   //-------estação: água e aquecimento------
@@ -903,13 +948,15 @@ void prepararPedido(pedido pedido) {
   desativarMUX(MUX_ESTEIRA);
   //desligarEsteira();
   if(readMux(IR0, MUX_IR0)== LOW) {
-    Serial.println("Copo detectado no mexedor");
+    if(debug) 
+  Serial.println("Copo detectado no mexedor");
   }
   delay(1000);
   mexer(15000);
 
   delay(2000);
 
+  if(debug) 
   Serial.print("PRONTO");
 
   //-------------ESTAÇÃO ENTREGA------------
@@ -933,15 +980,30 @@ void prepararPedido(pedido pedido) {
   }
   
 //----------------ate aqui tudo ok-----------------------
+pedido pedidoAtual;
+bool pedidoPronto = false;
 
-pedido getPedido() {
-  pedido pedido;
+void getPedido() {
   //verificar se a leitura serial é da esquerda pra direita
+  pedidoPronto = false;
   if(Serial.available()>0) {
-    byte sabores;
-    int idCliente;
+    //PRIMEIRO RECEBE CLIENTE
+    //DEPOIS RECEBE PEDIDO
+    Serial.readBytes(pedidoAtual.idCliente, 1);
+    byte escolha;
+    Serial.readBytes(escolha, 1);
+    pedidoAtual.aquecer = bitRead(escolha, 5);
+    for(int i = 4; i>=0; i--) {
+      pedidoAtual.sabores[4-i] = bitRead(escolha, i);
+    }
   }
-  return pedido;
+  return;
+}
+
+void setPedidoPronto() {
+  pedidoPronto = true;
+  if(debug) 
+  Serial.print("PRONTO");
 }
 
 /*
@@ -1118,9 +1180,16 @@ void loop() {
   //pedidoTeste.sabores[4] = true;
   
   //modoTeste();
+  getPedido();
+  if(pedidoAtual) {
+    
+    prepararPedido(pedidoAtual);
+    delay(500);
+    setPedidoPronto();
+  }
   
-  prepararPedido(pedidoTeste);
-  delay(500);
+
+  pedidoAtual = NULL;
 /*
   seletorMux(8, mux1); //confunde com 2
   pinMode(mux1, OUTPUT);
