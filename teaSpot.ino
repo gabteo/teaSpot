@@ -69,8 +69,14 @@
 //13 nao conectado
 //#define SONDA 14
 //15 nao conectado
-
-
+struct pedido {
+  bool aquecer;
+  bool sabores[5] = {0,0,0,0,0}; //= {0,1,2,3,4};
+  byte idCliente;
+};
+pedido pedidoAtual;
+bool pedidoPronto = false;
+bool temPedido = false;
 const bool debug = false;
 
 //MUX NO ARDUINO------------------------
@@ -135,11 +141,7 @@ int readMux(int channel, int muxSel/*, bool pullup = true*/);
 Servo dispenserLeft, dispenserRight;
 const int tempoElevador = 4500;
 
-struct pedido {
-  bool aquecer;
-  bool sabores[5] = {0,0,0,0,0}; //= {0,1,2,3,4};
-  byte idCliente;
-};
+
 /*const int maxLeft = 200;
 const int minLeft = 90;
 const int maxRight = 55;
@@ -903,7 +905,7 @@ void prepararPedido(pedido pedido) {
   desativarMUX(MUX_ESTEIRA);
   if(readMux(IR0, MUX_IR0)== LOW) {
     if(debug) 
-  Serial.println("Copo detectado no aquecimento");
+      Serial.println("Copo detectado no aquecimento");
   }
   //delay(5000); //delay de debug
   //-------estação: água e aquecimento------
@@ -928,11 +930,22 @@ void prepararPedido(pedido pedido) {
   for(int i = 0; i < 5; i++) {
     ligarEsteira();
     delay(20);
-    if(pedido.sabores[i] == '1') {
+    /*Serial.print("vetor escolha ");
+    for(int i = 0; i<5; i++) {
+      Serial.print(pedidoAtual.sabores[i]);
+    }
+    Serial.println();
+    Serial.print("vetor escolha ");
+    for(int i = 0; i<5; i++) {
+      Serial.print(pedido.sabores[i]);
+    }
+    Serial.println();
+    Serial.println(pedido.sabores[i] == 1);*/
+    if(pedido.sabores[i] == 1) {
       while(readMux(irs[i+1], MUX_IRS) == HIGH) {
       }
-      Serial.print("Entrou no sabor i");
-      Serial.println(i);
+      //Serial.print("Entrou no sabor i");
+      //Serial.println(i);
       desativarMUX(MUX_ESTEIRA);
       //desligarEsteira();
       delay(1000);
@@ -965,28 +978,25 @@ void prepararPedido(pedido pedido) {
   //-------------ESTAÇÃO ENTREGA------------
   ligarEsteira();
   int timer = millis();
-  int timerMax = timer+2000;
+  int timerMax = timer+5000;
   while(readMux(IR7, MUX_IR7) == HIGH && timer<timerMax) {
     timer = millis();
   }
   desativarMUX(MUX_ESTEIRA);
   delay(1000);
   setPedidoPronto();
-  while (!readMux(IR7, MUX_IR7))
-  {
+  do  {
     playBuzzer();
     delay(4000);
-  }
-    
+  } while  (readMux(IR7, MUX_IR7) == LOW);
+    //enquanto o copo ta ali    
   
   desativarMUX(mux1);
   desativarMUX(mux2);
   }
   
 //----------------ate aqui tudo ok-----------------------
-pedido pedidoAtual;
-bool pedidoPronto = false;
-bool temPedido = false;
+
 
 void getPedido() {
   //verificar se a leitura serial é da esquerda pra direita
@@ -1049,7 +1059,7 @@ void getPedido() {
 
 void setPedidoPronto() {
   pedidoPronto = true;
-  Serial.write("PRONTO");
+  Serial.print("PRONTO");
   if(debug) {Serial.println(" ");}
   temPedido = false;
 }
@@ -1192,6 +1202,10 @@ void setup() {
   
   setupMUX();
 
+  pedidoAtual.aquecer = false;
+  for(int i = 0; i<5; i++) {
+      pedidoAtual.sabores[i] = false;
+    }
   delay(10);
   playBuzzer();
   //setupMexedor();
