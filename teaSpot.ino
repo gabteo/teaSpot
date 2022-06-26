@@ -219,7 +219,7 @@ void setupElevador(int velocidadeElevador = 800, int aceleracaoElevador = 500) {
 
   
   //fimCursoElevador = digitalRead(mux2);
-  //if(debug) 
+  if(debug) 
   Serial.print("Fim de curso do elevador: ");
   //Serial.println(fimCursoElevador);
   if(debug) 
@@ -323,7 +323,8 @@ void setupMUX() {
 
   digitalWrite(mux2, LOW); 
   
-  Serial.println("Setup MUX2: ok");
+  if (debug)
+    Serial.println("Setup MUX2: ok");
 
   //ENABLES MUXES
   pinMode(EN_MUX1, OUTPUT);
@@ -927,12 +928,14 @@ void prepararPedido(pedido pedido) {
   for(int i = 0; i < 5; i++) {
     ligarEsteira();
     delay(20);
-    if(pedido.sabores[i]) {
+    if(pedido.sabores[i] == '1') {
       while(readMux(irs[i+1], MUX_IRS) == HIGH) {
       }
+      Serial.print("Entrou no sabor i");
+      Serial.println(i);
       desativarMUX(MUX_ESTEIRA);
       //desligarEsteira();
-      
+      delay(1000);
       dispensarSabor(i+1);  //i+1 sim: confia!
       delay(1000);
     }
@@ -968,6 +971,7 @@ void prepararPedido(pedido pedido) {
   }
   desativarMUX(MUX_ESTEIRA);
   delay(1000);
+  setPedidoPronto();
   while (!readMux(IR7, MUX_IR7))
   {
     playBuzzer();
@@ -987,27 +991,66 @@ bool temPedido = false;
 void getPedido() {
   //verificar se a leitura serial é da esquerda pra direita
   pedidoPronto = false;
+  char escolha;
+  char temp;
   if(Serial.available()>0) {
     temPedido = true;
-    //PRIMEIRO RECEBE CLIENTE
-    //DEPOIS RECEBE PEDIDO
-    char temp;
+    //PRIMEIRO RECEBE CLIENTE:    
     Serial.readBytes(&temp, 1);
     pedidoAtual.idCliente = temp;
-    char escolha;
+
+    //DEPOIS RECEBE PEDIDO:
     Serial.readBytes(&escolha, 1);
-    pedidoAtual.aquecer = bitRead(escolha, 5);
-    for(int i = 4; i>=0; i--) {
-      pedidoAtual.sabores[4-i] = bitRead(escolha, i);
+    pedidoAtual.aquecer = bitRead(escolha, 5);  //bitread: 0 é o menos significativo
+    /*for(int i = 4; i>=0; i--) {
+      Serial.print(bitRead(escolha, i), BIN);
+      if (bitRead(escolha, i)==true) {
+        pedidoAtual.sabores[4-i] = true;
+        
+      }
+        
+      else {
+        pedidoAtual.sabores[4-i] = false;
+      }
+      Serial.println(pedidoAtual.sabores[4-i]);
+    }*/
+    for (int i = 0; i < 5; i++)
+    {
+        if ((escolha % 2) == 1)
+          pedidoAtual.sabores[4-i] = true;
+        else
+          pedidoAtual.sabores[4-i] = false;
+        
+        escolha = escolha/2;
     }
+    if ((escolha % 2) == 1)
+          pedidoAtual.aquecer = true;
+    else
+        pedidoAtual.aquecer = false;
+  
+    }
+  if(debug) {
+    Serial.print("char escolha ");
+    Serial.println(escolha);
+    Serial.print("id cliente ");
+    Serial.println(pedidoAtual.idCliente);
+    Serial.print("aquecer ");
+    Serial.println(pedidoAtual.aquecer);
+    Serial.print("vetor escolha ");
+    for(int i = 0; i<5; i++) {
+      Serial.print(pedidoAtual.sabores[i]);
+    }
+    Serial.println();
   }
+  while (Serial.read() >= 0) {} ; // do nothing  
+  
   return;
 }
 
 void setPedidoPronto() {
   pedidoPronto = true;
-  if(debug) 
-  Serial.print("PRONTO");
+  Serial.write("PRONTO");
+  if(debug) {Serial.println(" ");}
   temPedido = false;
 }
 
@@ -1149,7 +1192,7 @@ void setup() {
   
   setupMUX();
 
-  delay(10000);
+  delay(10);
   playBuzzer();
   //setupMexedor();
   //levantarMexedor();
@@ -1177,25 +1220,34 @@ void setup() {
   //seletorMux(ELEVADOR, MUX_ELEVADOR);
   //digitalWrite(MUX_ELEVADOR, HIGH);
 }
-
 void loop() {
   
-  pedido pedidoTeste;
-  pedidoTeste.aquecer = true;
-  for (int i = 0; i < 5; i++)  
-    pedidoTeste.sabores[i] = true;
-  pedidoTeste.sabores[0] = true;
+  //pedido pedidoAtual;
+  //pedidoAtual.aquecer = true;
+  //for (int i = 0; i < 5; i++)  
+    //pedidoAtual.sabores[i] = false;
+  //pedidoAtual.sabores[0] = true;
+  //pedidoAtual.sabores[3] = true;
   //pedidoTeste.sabores[4] = true;
   
   //modoTeste();
+  /*for (int i = 0; i<1000; i++) {
+    getPedido();
+    delay(30);
+  }*/
   getPedido();
+  //prepararPedido(pedidoAtual);
+    delay(500);
   if(temPedido) {
     
     prepararPedido(pedidoAtual);
     delay(500);
-    setPedidoPronto();
+    
   }
-  
+
+  //delay(15000);
+  //setPedidoPronto();
+
 
   //pedidoAtual = NULL;
 /*
