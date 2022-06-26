@@ -1001,7 +1001,7 @@ void getPedido() {
 
     //DEPOIS RECEBE PEDIDO:
     Serial.readBytes(&escolha, 1);
-    pedidoAtual.aquecer = bitRead(escolha, 5);  //bitread: 0 é o menos significativo
+    //pedidoAtual.aquecer = bitRead(escolha, 5);  //bitread: 0 é o menos significativo
     /*for(int i = 4; i>=0; i--) {
       Serial.print(bitRead(escolha, i), BIN);
       if (bitRead(escolha, i)==true) {
