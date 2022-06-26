@@ -1197,6 +1197,15 @@ void modoTeste() {
 *//*
 int pedidosNaFila = 0;
 */
+
+int voltasEncher = 10;
+int voltasEsvaziar = 10;
+void poParafusos(int voltas)
+{
+  for (int i = 1; i < 6; i++)
+    for(int j = 0; j < voltas; j++)
+      dispensarSabor(i+1);
+}
 void setup() {
   Serial.begin(9600);
   
@@ -1208,6 +1217,8 @@ void setup() {
     }
   delay(10);
   playBuzzer();
+  poParafusos(voltasEncher); //Encher os parafusos
+  poParafusos(voltasEsvaziar); //Esvaziar os parafusos
   //setupMexedor();
   //levantarMexedor();
   //desativarMUX(MUX_SERVO_MIX);
