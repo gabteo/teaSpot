@@ -553,9 +553,9 @@ void descerElevador() {
   int j = 0;
   int flag=0;
   if(debug) 
-  Serial.print("Valor fim_curso: ");
+    Serial.print("Valor fim_curso: ");
   if(debug) 
-  Serial.println(digitalRead(MUX_FIM_CURSO));
+    Serial.println(digitalRead(MUX_FIM_CURSO));
   delay(50);
   bool fimCurso = 0;
   digitalWrite(MUX_ELEVADOR, LOW);
@@ -662,7 +662,7 @@ void levantarMexedor() {
     servoMexedor.write(posServoMexedor);
     if(debug) 
   Serial.println(posServoMexedor);
-    delay(5);    
+    delay(10);    
   }
   if(debug) 
   Serial.println("Mexedor levantado");
@@ -679,7 +679,7 @@ void abaixarMexedor() {
     servoMexedor.write(posServoMexedor);
     if(debug) 
   Serial.println(posServoMexedor);
-    delay(5);
+    delay(10);
   }  
   if(debug) 
   Serial.println("Mexedor abaixado");
@@ -703,14 +703,15 @@ void desligarMexedor() {
   if(debug) 
   Serial.println("Mexedor desligado");
 }
-void mexer(int tempo = 60000) {
+void mexer(int tempo = 15000) {
   if(debug) 
   Serial.println("Mexendo bebida...");
   abaixarMexedor();
   delay(1000);
 
   ligarMexedor();
-  delay(tempo);
+  for (int i = 0; i< 3; i++)
+    delay(tempo);
   desligarMexedor();
 
   delay(500);
@@ -733,9 +734,10 @@ void encherCopo(int tempo = 5000) {
   }
 
 
-void aquecer(int tempo = 5000) {
+void aquecer(int tempo = 40000) {
   ligarEbulidor();
-  delay(tempo);
+  //for (int i = 0; i < 100; i++)
+      delay(tempo);
 
   //if temperatura
   desligarEbulidor();
@@ -765,7 +767,7 @@ void dispensarSabor(int sabor) {
       }
        case 4: { 
         setupBipolar(100, 100);
-        tempo = 800;
+        tempo = 3200;
         sentidoHorario = 1;
         break;
       }
@@ -796,8 +798,8 @@ void dispensarSabor(int sabor) {
     switch(sabor) {
       case 1: {
         sentidoHorario = 0;
-        setupUnipolar(50);
-        passos = 50;
+        setupUnipolar(30);
+        passos = 175;
         break;
       }
        case 2: {
@@ -890,8 +892,18 @@ void desativarMUX(int muxSel) {
   }
 }
 
+void setPedidoPronto() {
+  pedidoPronto = true;
+  Serial.print("PRONTO");
+  if(debug) {Serial.println(" ");}
+  temPedido = false;
+}
+
 void prepararPedido(pedido pedido) {
   // Estação: dispenser de copos
+  //delay(10000);
+  //setPedidoPronto();
+
   delay(5000);
   dispensarCopo();
   
@@ -913,11 +925,12 @@ void prepararPedido(pedido pedido) {
   descerElevador();
   delay(2000);
 
-  encherCopo(5000);
+  encherCopo(5200);
   delay(3000);
 
   if(pedido.aquecer)
-    aquecer(20000);
+  for (int i = 0; i <3 ; i++)
+    aquecer(15000);
   delay(2000);
   
   subirElevador();
@@ -929,7 +942,7 @@ void prepararPedido(pedido pedido) {
 
   for(int i = 0; i < 5; i++) {
     ligarEsteira();
-    delay(20);
+    delay(5);
     /*Serial.print("vetor escolha ");
     for(int i = 0; i<5; i++) {
       Serial.print(pedidoAtual.sabores[i]);
@@ -955,18 +968,16 @@ void prepararPedido(pedido pedido) {
   }
  
   //----------ESTAÇÃO MEXEDOR-------------//
+  desativarMUX(MUX_ESTEIRA);
   delay(1000);
   levantarMexedor();
-  delay(3000);
+  delay(1000);
   ligarEsteira();
   while(readMux(IR6, MUX_IR6) == HIGH) {
   }
   desativarMUX(MUX_ESTEIRA);
   //desligarEsteira();
-  if(readMux(IR0, MUX_IR0)== LOW) {
-    if(debug) 
-  Serial.println("Copo detectado no mexedor");
-  }
+ 
   delay(1000);
   mexer(15000);
 
@@ -983,8 +994,13 @@ void prepararPedido(pedido pedido) {
     timer = millis();
   }
   desativarMUX(MUX_ESTEIRA);
+  abaixarMexedor();
   delay(1000);
-  setPedidoPronto();
+  //setPedidoPronto();
+  pedidoPronto = true;
+  Serial.print("PRONTO");
+  if(debug) {Serial.println(" ");}
+  temPedido = false;
   do  {
     playBuzzer();
     delay(4000);
@@ -1057,12 +1073,6 @@ void getPedido() {
   return;
 }
 
-void setPedidoPronto() {
-  pedidoPronto = true;
-  Serial.print("PRONTO");
-  if(debug) {Serial.println(" ");}
-  temPedido = false;
-}
 
 /*
 void modoTeste() {
@@ -1200,9 +1210,9 @@ int pedidosNaFila = 0;
 
 int voltasEncher = 10;
 int voltasEsvaziar = 10;
-void poParafusos(int voltas)
+void poParafusos(int voltas = 10)
 {
-  for (int i = 1; i < 6; i++)
+  for (int i = 0; i < 5; i++)
     for(int j = 0; j < voltas; j++)
       dispensarSabor(i+1);
 }
@@ -1217,8 +1227,8 @@ void setup() {
     }
   delay(10);
   playBuzzer();
-  poParafusos(voltasEncher); //Encher os parafusos
-  poParafusos(voltasEsvaziar); //Esvaziar os parafusos
+  //poParafusos(voltasEncher); //Encher os parafusos
+  //poParafusos(voltasEsvaziar); //Esvaziar os parafusos
   //setupMexedor();
   //levantarMexedor();
   //desativarMUX(MUX_SERVO_MIX);
@@ -1264,14 +1274,13 @@ void loop() {
   //prepararPedido(pedidoAtual);
     delay(500);
   if(temPedido) {
-    
     prepararPedido(pedidoAtual);
     delay(500);
-    
   }
+  setupMUX();
 
-  //delay(15000);
-  //setPedidoPronto();
+ // delay(15000);
+//setPedidoPronto();
 
 
   //pedidoAtual = NULL;
