@@ -1,7 +1,8 @@
 #include <Servo.h>
 #include <AccelStepper.h>
 #include <Stepper.h>
-
+#include <OneWire.h>  
+#include <DallasTemperature.h>
 
 #define CHA sabor1
 #define TODDY sabor2
@@ -20,6 +21,7 @@
 #define ELEVADOR 6    //P VER VERD A
 #define COPO_L 7
 #define ESTEIRA 8
+#define SONDA 15
 
 #define MUX_BUZZER mux1
 #define MUX_EN_S1 mux1
@@ -31,6 +33,7 @@
 #define MUX_ELEVADOR mux1
 #define MUX_COPO_L mux1
 #define MUX_ESTEIRA mux1
+#define MUX_SONDA mux1
 
 
 //MUX2
@@ -89,8 +92,8 @@ const bool debug = false;
 
 const int enables[] = {ELEVADOR, EN_S1, EN_S2, EN_S3, EN_S4, EN_S5};
 
-const int servoMexedorInicial = 0;
-const int servoMexedorFinal = 90;
+const int servoMexedorInicial = 0;  //posição abaixada da alavanca
+const int servoMexedorFinal = 90; //posição levantada da alavanca
 int posServoMexedor = servoMexedorFinal;
 
 //----------------PINOS MUX----------------//
@@ -100,7 +103,7 @@ const int s1mux1 = 3;
 const int s2mux1 = 4;
 const int s3mux1 = 5;
 //sinal MUX1
-const int mux1 = SIG_MUX1;
+const int mux1 = SIG_MUX1;  //pino de dados do mux1
 
 //MUX2
 const int s0mux2 = 6;
@@ -108,7 +111,7 @@ const int s1mux2 = 7;
 const int s2mux2 = 8;
 const int s3mux2 = 9;
 //sinal MUX1
-const int mux2 = SIG_MUX2;
+const int mux2 = SIG_MUX2;  //pino de dados do mux2
 //----------------------------------------//
 
 //portas motores bipolares
@@ -135,6 +138,11 @@ const int sabor1Pin1B = 10;
 const int sabor1Pin2A = 9;
 const int sabor1Pin2B = 8;
 */
+
+//sonda
+OneWire oneWire(MUX_SONDA); //protocolo oneWire para a sonda
+DallasTemperature sonda(&oneWire); //encaminha referências OneWire para o sensor
+
 
 int readMux(int channel, int muxSel/*, bool pullup = true*/);
 
@@ -452,10 +460,11 @@ void encolherDispenser() {
 void dispensarCopo() {
   setupCupDispenser();
   delay(30);
-  encolherDispenser();
-  delay(2000);
-  delay(30);
+  ///encolherDispenser();
+  //delay(2000);
   esticarDispenser();
+  delay(2000);
+  encolherDispenser();
   if(debug) 
   Serial.println("Copo dispensado");
   return;
@@ -734,10 +743,24 @@ void encherCopo(int tempo = 5000) {
   }
 
 
+
+
 void aquecer(int tempo = 40000) {
   ligarEbulidor();
   //for (int i = 0; i < 100; i++)
-      delay(tempo);
+
+  desativarMUX(MUX_SONDA);
+  pinMode(MUX_SONDA, INPUT);
+
+  seletorMux(SONDA, MUX_SONDA);
+  do
+  {
+    sonda.requestTemperatures();
+    delay(2500);
+  } while (sonda.getTempCByIndex(0) < 40.0);
+  
+
+  //delay(tempo);
 
   //if temperatura
   desligarEbulidor();
@@ -798,13 +821,13 @@ void dispensarSabor(int sabor) {
     switch(sabor) {
       case 1: {
         sentidoHorario = 0;
-        setupUnipolar(30);
-        passos = 175;
+        setupUnipolar(70, 60);  //30
+        passos = 150; //175
         break;
       }
        case 2: {
         sentidoHorario = 1;
-        setupUnipolar(50);
+        setupUnipolar(50, 100);
         passos = 50;
         break;
       }
@@ -911,6 +934,10 @@ void prepararPedido(pedido pedido) {
 
   ligarEsteira();
   delay(50);
+
+
+  //-------estação: água e aquecimento------
+  /*
   while(readMux(IR0, MUX_IR0) == HIGH) {
   }
   //desligarEsteira();
@@ -920,12 +947,12 @@ void prepararPedido(pedido pedido) {
       Serial.println("Copo detectado no aquecimento");
   }
   //delay(5000); //delay de debug
-  //-------estação: água e aquecimento------
+  
   delay(1000);
   descerElevador();
   delay(2000);
 
-  encherCopo(5200);
+  encherCopo(6500);
   delay(3000);
 
   if(pedido.aquecer)
@@ -933,7 +960,7 @@ void prepararPedido(pedido pedido) {
     aquecer(15000);
   delay(2000);
   
-  subirElevador();
+  subirElevador();*/
   //delay(2000);
 
 
@@ -1211,10 +1238,18 @@ int pedidosNaFila = 0;
 int voltasEncher = 10;
 int voltasEsvaziar = 10;
 void poParafusos(int voltas = 10)
-{
-  for (int i = 0; i < 5; i++)
-    for(int j = 0; j < voltas; j++)
+{/*
+  for (int i = 0; i < 5; i++) {
+    for(int j = 0; j < voltas; j++) {
       dispensarSabor(i+1);
+    }
+    delay(1500);
+  }
+    */
+   while(true)    {
+    dispensarSabor(2);
+   }
+    
 }
 void setup() {
   Serial.begin(9600);
@@ -1226,17 +1261,20 @@ void setup() {
       pedidoAtual.sabores[i] = false;
     }
   delay(10);
+  /*setupCupDispenser();
+  encolherDispenser();
+  delay(30);
+  desativarMUX(MUX_COPO_L);
+  desativarMUX(MUX_COPO_R);*/
+  /*
+  descerElevador();
+  subirElevador()
+  desativarMUX(MUX_ELEVADOR);*/
+
   playBuzzer();
-  //poParafusos(voltasEncher); //Encher os parafusos
+  poParafusos(voltasEncher); //Encher os parafusos
   //poParafusos(voltasEsvaziar); //Esvaziar os parafusos
-  //setupMexedor();
-  //levantarMexedor();
-  //desativarMUX(MUX_SERVO_MIX);
-  
-  //setupElevador();
-  //descerElevador();
-  //subirElevador();
-  //desativarMUX(MUX_ELEVADOR);
+   
   
   //FAZER: processo de inicialização e modo de abastecimento
   //setupElevador();
