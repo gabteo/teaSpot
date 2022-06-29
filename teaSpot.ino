@@ -937,16 +937,16 @@ void prepararPedido(pedido pedido) {
 
 
   //-------estação: água e aquecimento------
-  int timer2 = millis();
-  int timerMax2 = timer2+7000;
+  //int timer2 = millis();
+  //int timerMax2 = timer2+7000;
  
-  desativarMUX(MUX_ESTEIRA);
-  while(readMux(IR0, MUX_IR0) == HIGH && timer2<timerMax2) {
+  //desativarMUX(MUX_ESTEIRA);
+  while(readMux(IR0, MUX_IR0) == HIGH/* && timer2<timerMax2*/) {
   }
   desativarMUX(MUX_ESTEIRA);
-  if(timer2<timerMax2) {
+  /*if(timer2<timerMax2) {
     return;
-  }
+  }*/
   //desligarEsteira();
   
   if(readMux(IR0, MUX_IR0)== LOW) {
