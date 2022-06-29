@@ -749,18 +749,18 @@ void aquecer(int tempo = 40000) {
   ligarEbulidor();
   //for (int i = 0; i < 100; i++)
 
-  desativarMUX(MUX_SONDA);
-  pinMode(MUX_SONDA, INPUT);
+  //desativarMUX(MUX_SONDA);
+  //pinMode(MUX_SONDA, INPUT);
 
-  seletorMux(SONDA, MUX_SONDA);
+  /*seletorMux(SONDA, MUX_SONDA);
   do
   {
     sonda.requestTemperatures();
     delay(2500);
   } while (sonda.getTempCByIndex(0) < 40.0);
-  
+  */
 
-  //delay(tempo);
+  delay(tempo);
 
   //if temperatura
   desligarEbulidor();
@@ -784,7 +784,7 @@ void dispensarSabor(int sabor) {
     switch(sabor) {
       case 3: {
         setupBipolar(100, 100);
-        tempo = 800;
+        tempo = 9000;
         sentidoHorario = 1;
         break;
       }
@@ -827,13 +827,13 @@ void dispensarSabor(int sabor) {
       }
        case 2: {
         sentidoHorario = 1;
-        setupUnipolar(50, 100);
-        passos = 50;
+        setupUnipolar(35, 80);
+        passos = 2500;
         break;
       }
        case 5: {
         sentidoHorario = 0;
-        setupUnipolar(2, 60);
+        setupUnipolar(35, 35);
         passos = 75;
         break;
       }
@@ -937,11 +937,18 @@ void prepararPedido(pedido pedido) {
 
 
   //-------estação: água e aquecimento------
-  /*
-  while(readMux(IR0, MUX_IR0) == HIGH) {
+  int timer2 = millis();
+  int timerMax2 = timer2+7000;
+ 
+  desativarMUX(MUX_ESTEIRA);
+  while(readMux(IR0, MUX_IR0) == HIGH && timer2<timerMax2) {
+  }
+  desativarMUX(MUX_ESTEIRA);
+  if(timer2<timerMax2) {
+    return;
   }
   //desligarEsteira();
-  desativarMUX(MUX_ESTEIRA);
+  
   if(readMux(IR0, MUX_IR0)== LOW) {
     if(debug) 
       Serial.println("Copo detectado no aquecimento");
@@ -960,7 +967,7 @@ void prepararPedido(pedido pedido) {
     aquecer(15000);
   delay(2000);
   
-  subirElevador();*/
+  subirElevador();
   //delay(2000);
 
 
@@ -1247,7 +1254,7 @@ void poParafusos(int voltas = 10)
   }
     */
    while(true)    {
-    dispensarSabor(2);
+    dispensarSabor(5);
    }
     
 }
@@ -1261,6 +1268,9 @@ void setup() {
       pedidoAtual.sabores[i] = false;
     }
   delay(10);
+  descerElevador();
+  subirElevador();
+  desativarMUX(MUX_ELEVADOR);
   /*setupCupDispenser();
   encolherDispenser();
   delay(30);
@@ -1272,7 +1282,7 @@ void setup() {
   desativarMUX(MUX_ELEVADOR);*/
 
   playBuzzer();
-  poParafusos(voltasEncher); //Encher os parafusos
+  //poParafusos(voltasEncher); //Encher os parafusos
   //poParafusos(voltasEsvaziar); //Esvaziar os parafusos
    
   
@@ -1315,7 +1325,17 @@ void loop() {
     prepararPedido(pedidoAtual);
     delay(500);
   }
+  desativarMUX(mux1);
+  desativarMUX(mux2);
+  Serial.begin(9600);
+  
   setupMUX();
+
+  pedidoAtual.aquecer = false;
+  for(int i = 0; i<5; i++) {
+      pedidoAtual.sabores[i] = false;
+    }
+  delay(10);
 
  // delay(15000);
 //setPedidoPronto();
